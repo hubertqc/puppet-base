@@ -1,0 +1,17 @@
+# rules batch mailtasks
+
+mailtasks	ALL=(sa-milt)	NOPASSWD:	/usr/bin/sa-learn
+
+mailtasks	ALL=(root)	NOPASSWD:	/usr/bin/doveadm backup *
+
+mailtasks	ALL=(mail)	NOPASSWD:	/usr/bin/doveadm move *, \
+						/usr/bin/doveadm search *, \
+						/usr/bin/doveadm flags *, \
+						/usr/bin/doveadm fetch *, \
+						/usr/bin/doveadm expunge *, \
+						/usr/bin/doveadm index *, \
+						/usr/bin/doveadm mailbox create *,\
+						/usr/bin/doveadm mailbox list * 
+
+mailtasks	ALL=(root)	NOPASSWD:	/opt/mailtasks/createUserSpamDB
+

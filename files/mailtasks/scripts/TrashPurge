@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# Script, which allows per-user bayes db's for a dovecot virtual user
+# setup. sa-learn parses a set amount of folders (.Junk.Spam and .Junk.Ham) for
+# Ham/Spam and adds it to the per-user db.
+ 
+ 
+if [ -r $( dirname $0 )/MailTasksCONFIG ] 
+then
+	. $( dirname $0 )/MailTasksCONFIG
+else
+	echo "Unable to read $( dirname $0 )/MailTasksCONFIG"
+	exit 127
+fi
+
+if [ $( id -u ) -eq 0 ]
+then
+	echo "Cannot be run as root."
+	exit 27
+fi
+
+
+RC=0
+
+# get all mail accounts
+for domain in $MAIL_DIR/*
+do
+	echo
+	echo
+	echo '---------------------------------------------------------'
+	echo 
+	echo " Processing domain $domain"
+	echo 
+
+        for user in $MAIL_DIR/${domain##*/}/*
+	do
+                mailaccount=${user##*/}
+ 
+		sudo -u mail doveadm mailbox list -u ${mailaccount}@$( basename $domain ) "${TRASH_FOLDER}*" | grep -q "^${TRASH_FOLDER}$"
+		if [ $? -eq 0 ]
+		then
+			echo "Purging trash folder ${TRASH_FOLDER} for user ${mailaccount}"
+			sudo -u mail doveadm expunge -u ${mailaccount}@$( basename ${domain} ) mailbox "${TRASH_FOLDER}" sentbefore "${TRASH_RETENTION_DAYS}d"
+			rc=$?
+		fi
+        done
+done > ${LOGFILE} 2>&1
+
+[ $RC -ne 0 ] && cat ${LOGFILE}
+
+exit $RC

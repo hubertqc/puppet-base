@@ -1,0 +1,30 @@
+#!/bin/bash
+# Date: 20141008
+# Author: Vince + Hubert
+# Version: 2.0
+
+RC=0
+
+## VARIABLES
+MARIA_bkpdir=/var/opt/mariadb/backup/
+
+MARIA_user=mariabackup
+MARIA_password=a067cc391f2b7ad5099af715cc3771ea947821bcba56bae88ef7c466fcb13960
+
+if [ "${HOST}" = "ouranos" ]
+then
+	/usr/bin/mariabackup --backup \
+		--target-dir=${MARIA_bkpdir} \
+		--user=${MARIA_user} --password=${MARIA_password}
+else
+	/usr/bin/mariabackup --backup \
+		--slave-info --safe-slave-backup \
+		--target-dir=${MARIA_bkpdir} \
+		--user=${MARIA_user} --password=${MARIA_password}
+fi
+RC=$(( $RC + $? ))
+
+/usr/bin/mariabackup --prepare --target-dir=${MARIA_bkpdir}
+RC=$(( $RC + $? ))
+
+exit $RC

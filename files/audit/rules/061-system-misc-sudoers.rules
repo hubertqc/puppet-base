@@ -1,0 +1,7 @@
+#################################################################
+# This file is managed by Puppet                                #
+#################################################################
+
+
+-w /etc/sudoers -p wa -k MISC_sudoers
+-w /etc/sudoers.d/ -p wa -k MISC_sudoers

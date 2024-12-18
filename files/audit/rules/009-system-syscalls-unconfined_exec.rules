@@ -1,0 +1,7 @@
+#################################################################
+# This file is managed by Puppet                                #
+#################################################################
+
+#Command exec
+-a always,exit -F arch=b64 -S execve -F subj_type=unconfined_t -k EXECVE
+-a always,exit -F arch=b32 -S execve -F subj_type=unconfined_t -k EXECVE_32

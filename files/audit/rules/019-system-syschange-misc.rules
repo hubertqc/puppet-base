@@ -1,0 +1,13 @@
+#################################################################
+# This file is managed by Puppet                                #
+#################################################################
+
+# Misc system changes
+
+-a always,exit -F arch=b64 -S swapon -F subj_type!=sysadm_t -k SWAPON
+-a always,exit -F arch=b32 -S swapon -F subj_type!=sysadm_t -k SWAPON_32
+
+-a always,exit -F arch=b64 -F a2!=0 -S utimensat -k TIMESTAMP
+-a always,exit -F arch=b32 -F a2!=0 -S utimensat -k TIMESTAMP_32
+
+-w /etc/selinux/ -p wa -k MAC_policy

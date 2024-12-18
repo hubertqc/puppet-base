@@ -1,0 +1,100 @@
+# These values can be overridden by editing ~/.spamassassin/user_prefs.cf 
+# (see spamassassin(1) for details)
+
+# These should be safe assumptions and allow for simple visual sifting
+# without risking lost emails.
+
+internal_networks	10.255.0.0/16 fec0:255::/32 fe80::/32 fd5c:b82f:2918:613d::/64
+
+required_hits 5
+clear_headers
+report_safe 0
+rewrite_header Subject [SPAM score _SCORE_ detected by _HOSTNAME_]
+
+ok_locales fr en es it co de
+
+use_bayes		1
+use_bayes_rules		1
+bayes_auto_learn	1
+bayes_min_ham_num	50
+bayes_min_spam_num	50
+
+
+
+allow_user_rules 0
+
+add_header all Checker-Version SpamAssassin _VERSION_ (_SUBVERSION_) on _HOSTNAME_
+add_header all Flag _YESNOCAPS_
+add_header all Level _STARS(*)_
+add_header all Score _SCORE_
+add_header all Status "_YESNO_, score=_SCORE_ required=_REQD_ autolearn=_AUTOLEARN_ version=_VERSION_"
+add_header all Tests "_TESTSSCORES(,)_"
+add_header all Bayes "Bayes:score=_BAYES_,Bayes:tokens=_TOKENSUMMARY_"
+add_header all Bayes-Token-Summary "_TOKENSUMMARY_"
+
+
+# Adjust scores for SPF FAIL
+score SPF_FAIL			4.0
+score SPF_HELO_FAIL		4.0
+score SPF_HELO_SOFTFAIL		3.0
+score SPF_SOFTFAIL		3.0
+ 
+# Adjust DKIM scores
+#score DKIM_ADSP_ALL 2.0
+#score DKIM_ADSP_DISCARD  10.0
+#score DKIM_ADSP_NXDOMAIN 2.0
+
+meta CUST_DKIM_SIGNED_INVALID DKIM_SIGNED && !(DKIM_VALID || DKIM_VALID_AU)
+score CUST_DKIM_SIGNED_INVALID	5.0 5.5 3.0 3.0
+
+# Adjust PHISHing rules score
+score URI_PHISH			3.0
+score URIBL_DBL_ABUSE_PHISH	3.0
+
+score URIBL_BLACK		6.0 6.5 5.0 5.0
+score URIBL_ABUSE_SURBL		3.5
+score URIBL_DBL_SPAM		3.5
+
+score RCVD_IN_MSPIKE_L5		4.0
+score RCVD_IN_MSPIKE_BL		3.0
+score RCVD_IN_BL_SPAMCOP_NET	3.0
+
+score RCVD_IN_XBL       	2.0
+
+score MIXED_ES			1.7 2.0 1.7 1.7
+
+score HTML_MIME_NO_HTML_TAG	2.0
+score MIME_HTML_ONLY		1.4
+
+score DIET_1			4.0
+score LOTS_OF_MONEY		4.0
+
+score BAYES_99          	5.0
+score BAYES_999         	5.0
+
+score RDNS_NONE			0.0 0.5 0.5 1.5
+
+
+# PostgreSQL conf
+
+txrep_factory		Mail::SpamAssassin::SQLBasedAddrList
+user_awl_sql_table	txrep
+
+user_scores_dsn   			DBI:Pg:dbname=spamassassin;host=postgres.ip6.tartar.lurenzu.org
+user_scores_sql_username		spamassassin
+user_scores_sql_password		86fa10fa09140bc1659cfed894ff5a646f34c8f7fe1adfdd76198767ddd74218
+#user_scores_sql_override_username	common
+
+auto_whitelist_factory			Mail::SpamAssassin::SQLBasedAddrList
+user_awl_dsn   				DBI:Pg:dbname=spamassassin;host=postgres.ip6.tartar.lurenzu.org
+user_awl_sql_username			spamassassin
+user_awl_sql_password			86fa10fa09140bc1659cfed894ff5a646f34c8f7fe1adfdd76198767ddd74218
+#user_awl_override_username		common
+
+#bayes_store_module			Mail::SpamAssassin::BayesStore::SQL
+bayes_store_module			Mail::SpamAssassin::BayesStore::PgSQL
+bayes_sql_dsn  				DBI:Pg:dbname=spamassassin;host=postgres.ip6.tartar.lurenzu.org
+bayes_sql_username			spamassassin
+bayes_sql_password			86fa10fa09140bc1659cfed894ff5a646f34c8f7fe1adfdd76198767ddd74218
+#bayes_sql_override_username		common
+

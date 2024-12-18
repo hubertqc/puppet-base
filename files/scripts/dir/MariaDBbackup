@@ -1,0 +1,21 @@
+#!/bin/bash
+# Date: 20141008
+# Author: Vince + Hubert
+# Version: 2.0
+
+RC=0
+
+## VARIABLES
+TS=$(/bin/date -I)
+DUMP_DIR="/var/opt/mariadb/dumps"
+HOST=$(hostanme -s)
+
+/usr/bin/mysqldump -u root --all-databases | /bin/bzip2 > ${DUMP_DIR}/dump_${TS}.bz2
+RC=$?
+
+scp ${DUMP_DIR}/dump_${TS}.bz2 gaia:/var/opt/backup/MySQL/${HOST}-MySQL-dump_${TS}.bz2
+
+# Purge previous dumps 
+/usr/bin/find ${DUMP_DIR} -type f -mtime +7 -print0 | /usr/bin/xargs -0 -r -n 200 /bin/rm -f
+
+exit $RC

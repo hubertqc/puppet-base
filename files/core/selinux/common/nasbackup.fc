@@ -1,0 +1,1 @@
+/var/opt/backup/nas(/.*)?		gen_context(nasbackup_u:object_r:nasbackup_data_t,s0)

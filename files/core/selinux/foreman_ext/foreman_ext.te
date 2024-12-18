@@ -1,0 +1,38 @@
+
+policy_module(foreman_ext, 2.0.0)
+
+gen_require(`
+	type		foreman_rails_t;
+
+	type		redis_t;
+	type		postgresql_t;
+
+	type		foreman_db_t;
+
+	attribute	sepgsql_client_type;
+	attribute	sepgsql_admin_type;
+
+	class           db_database	{ access get_param getattr set_param };
+	class           db_schema	{ add_name getattr remove_name search };
+        class           db_table	{ insert lock select update delete };
+        class           db_column	{ insert select update };
+        class           db_view		expand;
+        class           db_procedure	execute;
+	class		db_sequence	{ create drop get_value getattr next_value relabelfrom relabelto set_value setattr };
+	class		db_tuple	{ delete insert relabelfrom relabelto select update use };
+')
+
+typeattribute	foreman_rails_t	sepgsql_client_type;
+
+allow	foreman_rails_t	foreman_db_t:db_database	{ access get_param getattr };
+allow	foreman_rails_t	foreman_db_t:db_schema		{ getattr search };
+allow	foreman_rails_t	foreman_db_t:db_table		{ lock select };
+allow	foreman_rails_t	foreman_db_t:db_view		{ expand };
+allow	foreman_rails_t	foreman_db_t:db_column		{ select };
+
+#============= redis_t ==============
+allow	redis_t			foreman_rails_t:peer	recv;
+allow	foreman_rails_t		redis_t:peer		recv;
+
+allow	foreman_rails_t	postgresql_t:peer	recv;
+allow	postgresql_t	foreman_rails_t:peer	recv;

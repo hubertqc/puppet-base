@@ -1,0 +1,18 @@
+#################################################################
+# This file is managed by Puppet                                #
+#################################################################
+
+#Unusual syscalls
+-a always,exit -F arch=b64 -S personality -k PERSONALITY
+-a always,exit -F arch=b32 -S personality -k PERSONALITY_32
+-a always,exit -F arch=b64 -S ptrace -k PTRACE
+-a always,exit -F arch=b32 -S ptrace -k PTRACE_32
+-a always,exit -F arch=b64 -S acct -k ACCT
+-a always,exit -F arch=b32 -S acct -k ACCT_32
+
+#Links
+-a always,exit -F arch=b64 -S link -S linkat -k LINK
+-a always,exit -F arch=b32 -S link -S linkat -k LINK_32
+-a always,exit -F arch=b64 -S symlink -S symlinkat -k SYMLINK
+-a always,exit -F arch=b32 -S symlink -S symlinkat -k SYMLINK_32
+

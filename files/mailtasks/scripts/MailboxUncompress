@@ -1,0 +1,125 @@
+#!/bin/bash
+
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+if [ -r $( dirname $0 )/MailTasksCONFIG ] 
+then
+	. $( dirname $0 )/MailTasksCONFIG
+else
+	exit 127
+fi
+
+RC=0
+
+
+MAIL_USER=mail
+MAIL_GROUP=mail
+
+RC=0 
+
+if [[ $# -ne 4 ]]
+then
+	echo $0 "<days> <maildomain> <mailaccount> <mailbox>"
+	exit -1
+fi
+
+Threshold=$1
+maildomain=$2
+mailaccount=$3
+mailbox=$4
+
+if [ ${Threshold} -ge 25 ]
+then
+	
+	doveadm mailbox list -u ${mailaccount}@${maildomain} "${mailbox}*" | grep -q "^${mailbox}$"
+	if [ $? -eq 0 ]
+	then
+		mailboxdir="${MAIL_DIR}/${maildomain}/${mailaccount}/Maildir/.${mailbox}"
+		unzip_error_dir="${MAIL_DIR}/${maildomain}/${mailaccount}/UncompressErrors/${mailbox}"
+		[ -d "${unzip_error_dir}" ] || mkdir -p -m 2770 "${unzip_error_dir}"
+
+		echo "Scanning ${mailboxdir}"
+
+		if [ -f "${mailboxdir}/maildirfolder" -a -d "${mailboxdir}/cur" -a ! "${mailbox}" = "${SPAM_FOLDER}" ]
+		then 
+			nb=$( find "${mailboxdir}/cur/" -type f -mtime -${Threshold} -name '*Z' | wc -l )
+
+			if [ $nb -gt 0 ]
+			then
+				echo "Adquiring maildirlock on ${mailboxdir}"
+				if PID=$( /usr/libexec/dovecot/maildirlock "${mailboxdir}" 20 )
+				then
+					nb_files=0 ; nb_unzipped=0 ; nb_errors=0
+					for file_wsp in $( find "${mailboxdir}/cur/" -type f -mtime -${Threshold} -name '*Z' | sed -e 's/ //g' )
+					do
+						file=$( echo "${file_wsp}" | sed -e 's// /g' )
+
+						mailfile=$( basename "${file}" )
+						mailfile_unZ=$( basename "${file}" | sed -e 's/Z$//' )
+
+						if [ -s "${mailboxdir}/cur/${mailfile}" ]
+						then
+							file "${mailboxdir}/cur/${mailfile}" | grep 'compressed data'  > /dev/null
+							zip_filetype=$?
+
+							if [ ${zip_filetype} -eq 0 ]
+							then
+								echo "   Unzipping ${mailfile}"
+
+								bzcat "${mailboxdir}/cur/${mailfile}" > "${mailboxdir}/tmp/${mailfile_unZ}" 2>/dev/null
+								if [ $? -eq 0 ]
+								then
+									touch -r "${mailboxdir}/cur/${mailfile}" "${mailboxdir}/tmp/${mailfile_unZ}"
+									chown ${MAIL_USER}:${MAIL_GROUP} "${mailboxdir}/tmp/${mailfile_unZ}"
+									chmod 600 "${mailboxdir}/tmp/${mailfile_unZ}"
+
+									mv "${mailboxdir}/tmp/${mailfile_unZ}" "${mailboxdir}/cur/"
+									rm "${mailboxdir}/cur/${mailfile}"
+									nb_unzipped=$(( $nb_unzipped + 1 ))
+								else
+									echo "! Error while unzipping"
+									mv -f "${mailboxdir}/cur/${mailfile}" "${unzip_error_dir}/"
+									rm "${mailboxdir}/tmp/${mailfile_unZ}"
+									nb_errors=$(( $nb_errors + 1 ))
+								fi
+							else
+								echo "  ${mailboxdir}/cur/${mailfile} is not compressed"
+							fi
+						else
+							echo "  ${mailboxdir}/cur/${mailfile} is empty"
+						fi
+
+						nb_files=$(( $nb_files + 1 ))
+					done
+
+					echo ".. ${nb_files} files scanned."
+					echo ".. ${nb_unzipped} files unzipped."
+					echo ".. ${nb_errors} files with errors (untouched)."
+
+					echo "Releasing maildirlock"
+					kill $PID
+
+					if [ ${nb_unzipped} -gt 0 ]
+					then
+						echo "  re-indexing and re-syncing ${mailbox}."
+						doveadm -v force-resync -u ${mailaccount}@${maildomain} "${mailbox}"
+						doveadm -v index -u ${mailaccount}@${maildomain} "${mailbox}"
+						RC=$?
+					fi
+				else
+					echo "lock failed"
+				fi
+			else
+				echo "  No compressed file found."
+			fi
+		fi
+	else
+		echo "Mailbox ${mailbox} for account ${mailaccount} in domain ${maildomain} could not be found."
+		RC=1
+	fi
+else
+	echo "${Threshold} must be over 25."
+	RC=1
+fi
+
+exit $RC

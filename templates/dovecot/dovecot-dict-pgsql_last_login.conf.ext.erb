@@ -1,0 +1,17 @@
+connect = host=<%= @pg_host %> dbname=<%= @pg_dbname %> user=<%= @pg_user %> password=<%= @pg_passwd %>
+
+map {
+  pattern = shared/last-login/$server/$service/$remote_ip/$user
+
+  table = last_login
+
+  value_field = last_access
+  value_type = uint
+
+  fields {
+    server = $server
+    service = $service
+    last_ip = $remote_ip
+    login = $user
+  }
+}

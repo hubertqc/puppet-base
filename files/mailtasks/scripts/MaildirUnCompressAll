@@ -1,0 +1,91 @@
+#!/bin/bash
+
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+MAIL_ROOTDIR=/var/spool/mail/
+
+MAIL_USER=mail
+MAIL_GROUP=mail
+
+RC=0 
+
+if [[ $1 == "" ]]
+then
+	echo $0 " "
+	exit -1
+fi
+
+Threshold=$1
+
+if [ ${Threshold} -ge 25 ]
+then
+	find ${MAIL_ROOTDIR} -type d | while read MailDir
+	do
+		echo "Scanning ${MailDir}"
+		if [ -f "${MailDir}/maildirfolder" -a -d "${MailDir}/cur" -a ! "$( basename '${MailDir}' )" = "Spam" ]
+		then 
+			nb=$( find "${MailDir}/cur/" -type f -mtime -${Threshold} -name '*Z' | wc -l )
+
+			if [ $nb -gt 0 ]
+			then
+				echo "Adquiring maildirlock on ${MailDir}"
+				if PID=$( /usr/libexec/dovecot/maildirlock "${MailDir}" 20 )
+				then
+					nb_files=0 ; nb_unzipped=0 ; nb_errors=0
+					find "${MailDir}/cur/" -type f -mtime -${Threshold} -name '*Z' | while read file
+					do
+						mailfile=$( basename "${file}" )
+						mailfile_unZ=$( basename "${file}" | sed -e 's/Z$//' )
+
+						if [ -s "${MailDir}/cur/${mailfile}" ]
+						then
+							file "${MailDir}/cur/${mailfile}" | grep 'compressed data'  > /dev/null
+							zip_filetype=$?
+
+							if [ ${zip_filetype} -eq 0 ]
+							then
+								echo "   Unzipping ${mailfile}"
+
+								bzcat "${MailDir}/cur/${mailfile}" > "${MailDir}/tmp/${mailfile_unZ}"
+								if [ $? -eq 0 ]
+								then
+									touch -r "${MailDir}/cur/${mailfile}" "${MailDir}/tmp/${mailfile_unZ}"
+									chown ${MAIL_USER}:${MAIL_GROUP} "${MailDir}/tmp/${mailfile_unZ}"
+									chmod 600 "${MailDir}/tmp/${mailfile_unZ}"
+
+									mv "${MailDir}/tmp/${mailfile_unZ}" "${MailDir}/cur/"
+									rm "${MailDir}/cur/${mailfile}"
+									nb_unzipped=$(( $nb_unzipped + 1 ))
+								else
+									echo "! Error while unzipping"
+									rm "${MailDir}/tmp/${mailfile_unZ}"
+									nb_errors=$(( $nb_errors + 1 ))
+								fi
+							else
+								echo "  ${MailDir}/cur/${mailfile} is not compressed"
+							fi
+						else
+							echo "  ${MailDir}/cur/${mailfile} is empty"
+						fi
+
+						nb_files=$(( $nb_files + 1 ))
+					done
+
+					echo ".. ${nb_files} files scanned."
+					echo ".. ${nb_unzipped} files unzipped."
+					echo ".. ${nb_errors} files with errors (untouched)."
+
+					echo "Releasing maildirlock"
+					kill $PID
+				else
+					echo "lock failed"
+				fi
+			fi
+		fi
+	done
+else
+	echo "${Threshold} must be over 25."
+	RC=1
+fi
+
+exit $RC

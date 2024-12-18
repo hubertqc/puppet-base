@@ -1,0 +1,27 @@
+MAIL_DIR=/var/spool/mail
+COMMON_SPAMASS_DIR=/var/lib/spamassassin/common
+SPAMASS_DIR=/var/lib/spamassassin
+
+TRASH_FOLDER="Trash"
+SPAM_FOLDER="Spam"
+SPAMLEARNT_FOLDER="SpamControl.Learnt-as-Spam"
+HAM_FOLDER="SpamControl.Report-as-Innocent"
+
+LOGFILE=/var/log/MailTasks/$(basename $0).$(date +%Yw%V)log
+
+LOCK=/var/lock/MailTasks/$(basename $0)
+LOCKDIR=/var/lock/MailTasks/$(basename $0).d
+
+USER_LIST=/etc/dovecot/dovecot.synclist
+
+MASTER_SERVER="ouranos"
+
+TARGET_SERVERS="nyx chaos promethee"
+TARGET_SERVERS="nyx"
+
+MAX_ATTEMPTS=10
+MAILBOX_SYNC_MAX_ATTEMPTS=10
+MAILBOX_INDEX_MAX_ATTEMPTS=10
+
+SPAMLEARNT_RETENTION_DAYS=5
+TRASH_RETENTION_DAYS=10

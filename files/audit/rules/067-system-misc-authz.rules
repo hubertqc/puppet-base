@@ -1,0 +1,7 @@
+#################################################################
+# This file is managed by Puppet                                #
+#################################################################
+
+-w /etc/group -p wa -k MISC_AUTHZ_groups
+-w /etc/security/opasswd -p wa -k MISC_AUTHZ_opasswd
+-w /etc/passwd -p wa -k MISC_AUTHZ_passwd

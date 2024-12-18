@@ -1,0 +1,64 @@
+#!/bin/bash
+RC=0
+
+debug_file=/var/log/MailTasks/sa-learn.$(date +%Yw%V).trc
+LOCKfile_dir=/var/lock/MailTasks/$(basename $0).d
+me=$$
+
+[ -d ${LOCKfile_dir} ] || mkdir ${LOCKfile_dir}
+
+echo "[${me}] ======================================================" >> ${debug_file}
+echo "[${me}] $(date -Iseconds) / $(id)" >> ${debug_file}
+
+workdir=/var/spool/mail/imapsieve/
+
+for dir in ${workdir}/*
+do
+	user=$( basename "${dir}" )
+
+	cd "${dir}/"
+	echo "[${me}] + Entered ${dir}/" >> ${debug_file}
+
+	for file in $( ls | sort -k 2,1n -t . )
+	do
+		lock_file="${LOCKfile_dir}/${user}-${file}"
+		rc=0
+
+		if [ -f "${lock_file}" ]
+		then
+			prev_pid=$(cat "${lock_file}")
+			if [ -n "${prev_pid}" ]
+			then
+				ps -p "${prev_pid}" > /dev/null 2>&1
+				if [ $? -eq 0 ]
+				then
+					echo "[${me}]  (w) Found lock file for file ${file}, held by PID ${prev_pid}, skipping file."
+				fi
+			fi
+		fi
+
+		echo $$ > "${lock_file}"
+
+		filetype=$( echo "${file}" | cut -f 3 -d . )
+		if [ "${filetype}" = "ham" -o "${filetype}" = "spam" ]
+		then
+			echo "[${me}]  . learning from ${filetype} file ${file}" >> ${debug_file}
+			sa-learn --${filetype} -u "${user}" "${workdir}/${user}/${file}" >> ${debug_file} 2>&1
+			rc=$?
+
+			RC=$(( $RC + $rc ))
+		else
+			if [ "${filetype}" = "flags" ]
+			then
+				rc=5
+			else
+				echo "[${me}]  Warning: unknown filetype ${filetype} for file ${user}/${file}" >> ${debug_file} 2>&1
+			fi
+		fi
+		[ $rc -eq 0 ] && rm -f "${file}"
+
+		rm -f "${lock_file}"
+	done
+done
+
+exit $RC

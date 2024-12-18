@@ -1,0 +1,132 @@
+policy_module(ipsec_ext, 0.5.0)
+
+gen_require(`
+	attribute 	domain;
+	attribute 	postfix_domain;
+	attribute 	daemon;
+	attribute	netlabel_peer_type;
+
+	type	ipsec_t;
+
+	type	unlabeled_t;
+
+	type	ifconfig_t;
+	type	netlabel_mgmt_t;
+
+	type	slapd_t;
+	type	dirsrv_t;
+	type	saslauthd_t;
+
+        type	logwatch_t;
+
+	type	dovecot_t;
+	type	dovecot_auth_t;
+
+	type	dkim_milter_t;
+	type	spamass_milter_t;
+	type	antivirus_t;
+
+	type	postfix_smtp_t;
+	type	postfix_smtpd_t;
+	type	postfix_master_t;
+        type	postfix_cleanup_t;
+
+	type	named_t;
+	type	ndc_t;
+
+	type 	spamd_t;
+	type 	spamc_t;
+
+	type	postgresql_t;
+
+	type	rpcbind_t;
+	type	rpcd_t;
+
+	type	nasbackup_t;
+
+	type	sysctl_net_t;
+
+	type	netlabel_peer_t;
+	type	unlabeled_t;
+
+')
+
+sysnet_exec_ifconfig(netlabel_mgmt_t)
+kernel_search_network_sysctl(netlabel_mgmt_t)
+kernel_request_load_module(netlabel_mgmt_t)
+
+corenet_out_generic_node(netlabel_peer_t)
+corenet_out_generic_node(unlabeled_t)
+corenet_out_generic_if(unlabeled_t)
+
+allow	netlabel_mgmt_t	self:netlink_route_socket	r_netlink_socket_perms;
+allow	netlabel_mgmt_t	self:udp_socket			{ create ioctl read getattr write setattr append bind getopt setopt shutdown };
+allow	netlabel_mgmt_t	self:unix_dgram_socket		{ create ioctl read getattr write setattr append bind getopt setopt shutdown };
+
+allow	netlabel_mgmt_t sysctl_net_t:dir search_dir_perms;
+
+allow	ipsec_t	domain:association	setcontext;
+
+ipsec_match_default_spd(unlabeled_t)
+corenet_in_generic_if(ipsec_spd_t)
+ipsec_match_default_spd(ipsec_spd_t)
+
+
+allow	ifconfig_t	daemon:association		setcontext;
+
+allow	ifconfig_t	postgresql_t:association	setcontext;
+allow	ifconfig_t	postfix_smtpd_t:association	setcontext;
+allow	ifconfig_t	dovecot_t:association		setcontext;
+allow	ifconfig_t	dovecot_auth_t:association	setcontext;
+
+allow	dkim_milter_t	self:process	setrlimit;
+
+allow	slapd_t 		dovecot_auth_t:peer	recv;
+allow	dirsrv_t 		dovecot_auth_t:peer	recv;
+allow	dovecot_auth_t		slapd_t:peer		recv;
+allow	dovecot_auth_t		dirsrv_t:peer		recv;
+
+allow	slapd_t			saslauthd_t:peer	recv;
+allow	dirsrv_t		saslauthd_t:peer	recv;
+allow	saslauthd_t		slapd_t:peer		recv;
+allow	saslauthd_t		dirsrv_t:peer		recv;
+
+allow	dovecot_t		postfix_smtp_t:peer	recv;
+allow	postfix_smtp_t		dovecot_t:peer		recv;
+
+allow	postfix_master_t	postfix_smtp_t:peer	recv;
+allow	postfix_smtp_t		postfix_master_t:peer	recv;
+
+allow	spamass_milter_t	postfix_smtpd_t:peer	recv;
+allow	postfix_smtpd_t		spamass_milter_t:peer	recv;
+
+allow	dkim_milter_t		postfix_smtpd_t:peer	recv;
+allow	postfix_smtpd_t		dkim_milter_t:peer	recv;
+
+allow	antivirus_t		postfix_smtpd_t:peer	recv;
+allow	postfix_smtpd_t		antivirus_t:peer	recv;
+
+allow	spamass_milter_t	postfix_cleanup_t:peer	recv;
+allow	postfix_cleanup_t	spamass_milter_t:peer	recv;
+
+allow	dkim_milter_t		postfix_cleanup_t:peer	recv;
+allow	postfix_cleanup_t	dkim_milter_t:peer	recv;
+
+allow	antivirus_t		postfix_cleanup_t:peer	recv;
+allow	postfix_cleanup_t	antivirus_t:peer	recv;
+
+allow	named_t			netlabel_peer_type:peer	recv;
+allow	netlabel_peer_type	named_t:peer		recv;
+
+allow	spamd_t			spamc_t:peer		recv;
+allow	spamc_t			spamd_t:peer		recv;
+
+allow	rpcbind_t		rpcd_t:peer		recv;
+allow	rpcd_t			rpcbind_t:peer		recv;
+
+allow	named_t			nasbackup_t:peer	recv;
+allow	nasbackup_t		named_t:peer		recv;
+
+allow	slapd_t			postfix_domain:peer	recv;
+allow	postfix_domain		slapd_t:peer		recv;
+

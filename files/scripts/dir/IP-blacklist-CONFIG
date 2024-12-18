@@ -1,0 +1,27 @@
+
+WHITELIST_FILE=/etc/sysconfig/IP_whitelist
+BLACKLIST_FILE=/etc/sysconfig/IP_blacklist
+
+IPTABLES_RULE_white=L6-Whitelist-check
+IPTABLES_RULE_nets=L6-BlacklistNets-check
+IPTABLES_RULE_ips=L6-BlacklistIPs-check
+IPTABLES_RULE=L6-BlacklistIPs-check
+
+IPTABLE_BLOCKING=L9-reject
+IPTABLE_ACCEPT=L9-accept
+
+LOCKFILE=/var/lock/IP-blacklist.lock
+BLACKLIST_FILE=/etc/sysconfig/IP_blacklist
+
+SOURCE_FILE_ssh=/var/tmp/secure.sshd.log
+SOURCE_FILE_smtp=/var/tmp/smtp.log
+
+SUBNET_MASK=29
+
+FAIL_LIMIT=5
+FAIL_LIMIT_ssh=5
+FAIL_LIMIT_smtp=5
+
+
+SPREAD_USER=ansible
+PARTNERS="iris hermes gaia nyx"

@@ -1,0 +1,170 @@
+#!/bin/bash
+
+# Script, which allows per-user bayes db's for a dovecot virtual user
+# setup. sa-learn parses a set amount of folders (.Junk.Spam and .Junk.Ham) for
+# Ham/Spam and adds it to the per-user db.
+
+exit 0
+ 
+if [ -r $( dirname $0 )/MailTasksCONFIG ] 
+then
+	. $( dirname $0 )/MailTasksCONFIG
+else
+	echo "Unable to read $( dirname $0 )/MailTasksCONFIG"
+	exit 127
+fi
+
+if [ $( id -u ) -eq 0 ]
+then
+	echo "Cannot be run as root."
+	exit 27
+fi
+
+if [ -f ${LOCK} ]
+then
+	echo "Lock file found."
+	exit 27
+fi
+
+touch ${LOCK}
+
+RC=0
+
+AZ="abcdefghijklmnopqrstuvwxyz"
+
+TTY=$( tty )
+
+if [ -n "$TTY" ]
+then
+	progress="--progress"
+else
+	progress=""
+fi
+
+MAIL_DIR_LIST="$MAIL_DIR/*" 
+
+if [ $# -eq 1 -a -d "$MAIL_DIR/$1" ]
+then
+	MAIL_DIR_LIST="$MAIL_DIR/$1" 
+fi
+
+# get all mail accounts
+for domain in $MAIL_DIR_LIST
+do
+	if [ -d ${domain} ]
+	then
+		echo
+		echo
+		echo '---------------------------------------------------------'
+		echo 
+		echo " Processing domain $domain"
+		echo 
+
+		for user in $MAIL_DIR/${domain##*/}/*
+		do
+			mailaccount=${user##*/}
+			dbpath="${SPAMASS_DIR}/${domain##*/}/${mailaccount}"
+			spamfolder="${domain}/${mailaccount}/Maildir/.${SPAM_FOLDER}"
+			inbox="${domain}/${mailaccount}/Maildir/"
+	 
+			[ ! -d "${dbpath}" ] && sudo /opt/mailtasks/createUserSpamDB "${dbpath}"
+
+			untouched=0
+
+			if [ -d "${spamfolder}" ]
+			then
+				nb=$( find "${spamfolder}/cur" "${spamfolder}/new" -type f 2>/dev/null | wc -l )
+				if [ $nb -gt 0 ]
+				then
+					echo "Learning Spam from ${spamfolder} for user ${mailaccount}"
+					sudo -u sa-milt sa-learn --spam --dbpath ${dbpath}/bayes ${progress} --no-sync "${spamfoldera/cur/}"
+					sudo -u sa-milt sa-learn --spam -u ${mailaccount} ${progress} "${spamfolder}/cur/"
+					rc=$?
+					RC=$(( $RC + $rc ))
+
+					if [ "${MASTER_SERVER}" = $( hostname -s ) ]
+					then
+						if [ $rc -eq 0 ]
+						then
+							sudo -u mail doveadm mailbox list -u ${mailaccount}@$( basename ${domain} ) "${SPAMLEARNT_FOLDER}*" | grep -q "^${SPAMLEARNT_FOLDER}$"
+							if [ $? -ne 0 ]
+							then
+								echo "Creating missing ${SPAMLEARNT_FOLDER} folder"
+								sudo -u mail doveadm mailbox create -s -u ${mailaccount}@$( basename ${domain} ) "${SPAMLEARNT_FOLDER}"
+								rc=$?
+							fi
+						fi
+
+						if [ $rc -eq 0 ]
+						then
+							echo "Moving learnt spam"
+							sudo -u mail doveadm move -u ${mailaccount}@$( basename ${domain} ) "${SPAMLEARNT_FOLDER}" mailbox "${SPAM_FOLDER}" all
+						fi
+					fi
+
+					untouched=1
+				fi
+			fi
+
+			if [ -f "${inbox}/dovecot-keywords" ]
+			then
+				filelist=/var/tmp/mailtasks/$(basename $0).$$
+
+				for flag_idx in $( awk '($2 ~ "^[$]*Junk$") {print $1}'  "${inbox}/dovecot-keywords" )
+				do
+					flag=${AZ:$flag_idx:1}
+					find "${inbox}/cur" -mtime +4 -type f -name "*:2,*${flag}*"
+				done > ${filelist}
+				
+				if [ -s ${filelist} ]
+				then
+					echo "Learning Spam from messages marked as Junk in INBOX for user ${mailaccount}"
+					sudo -u sa-milt sa-learn --spam --dbpath ${dbpath}/bayes ${progress} --no-sync --folders=${filelist}
+					sudo -u sa-milt sa-learn --spam -u ${mailaccount} ${progress} --folders=${filelist}
+					rc=$?
+					RC=$(( $RC + $rc ))
+
+					if [ "${MASTER_SERVER}" = $( hostname -s ) ]
+					then
+						if [ $rc -eq 0 ]
+						then
+							sudo -u mail doveadm mailbox list -u ${mailaccount}@$( basename ${domain} ) "${SPAMLEARNT_FOLDER}*" | grep -q "^${SPAMLEARNT_FOLDER}$"
+							if [ $? -ne 0 ]
+							then
+								echo "Creating missing ${SPAMLEARNT_FOLDER} folder"
+								sudo -u mail doveadm mailbox create -s -u ${mailaccount}@$( basename ${domain} ) "${SPAMLEARNT_FOLDER}"
+								rc=$?
+							fi
+						fi
+
+						if [ $rc -eq 0 ]
+						then
+							echo "Moving learnt spam"
+							sudo -u mail doveadm move -u ${mailaccount}@$( basename ${domain} ) "${SPAMLEARNT_FOLDER}" mailbox INBOX KEYWORD 'Junk'
+							sudo -u mail doveadm move -u ${mailaccount}@$( basename ${domain} ) "${SPAMLEARNT_FOLDER}" mailbox INBOX KEYWORD '$Junk'
+						fi
+					fi
+
+					untouched=1
+				fi
+
+				rm -f ${filelist}
+			fi
+	 
+			if [ $untouched -ne 0 ] ; then
+				sudo -u sa-milt sa-learn --sync --dbpath $dbpath
+	 
+				# Fix dbpath permissions
+				#chmod 2700 ${dbpath}
+			fi
+		done
+	fi
+
+done > ${LOGFILE} 2>&1
+
+echo "RC: $RC" >> ${LOGFILE}
+[ $RC -ne 0 ] && cat ${LOGFILE}
+
+rm -f ${LOCK}
+
+exit $RC

@@ -1,0 +1,145 @@
+policy_module(imapsieve, 0.17.0)
+
+gen_require(`
+        type	dovecot_t;
+
+        type	spamc_t;
+        type	spamc_exec_t;
+
+	type	mail_spool_t;
+	type	etc_mail_t;
+	type	spamd_var_lib_t;
+
+	type	mail_spam_userpref_t;
+')
+
+type	imapsieve_t;
+type	imapsieve_exec_t;
+type	imapsieve_script_t;
+type	imapsieve_tmp_t;
+type	imapsieve_run_t;
+
+type	mail_spool_dovecot_index_t;
+type	mail_spool_dovecot_attr_t;
+type	mail_spool_dovecot_log_t;
+
+attribute	imapsieve_file;
+attribute	imapsieve_exec_file;
+
+attribute	mail_spool_dovecot_file;
+
+files_type(imapsieve_script_t)
+files_tmp_file(imapsieve_tmp_t)
+
+typeattribute imapsieve_exec_t		imapsieve_file, imapsieve_exec_file;
+typeattribute imapsieve_script_t	imapsieve_file, imapsieve_exec_file;
+typeattribute imapsieve_tmp_t		imapsieve_file;
+typeattribute imapsieve_run_t		imapsieve_file;
+
+files_type(mail_spool_dovecot_index_t)
+files_type(mail_spool_dovecot_attr_t)
+files_type(mail_spool_dovecot_log_t)
+typeattribute	mail_spool_dovecot_attr_t	mail_spool_dovecot_file;
+typeattribute	mail_spool_dovecot_index_t	mail_spool_dovecot_file;
+typeattribute	mail_spool_dovecot_log_t	mail_spool_dovecot_file;
+
+role system_r types imapsieve_t;
+
+init_daemon_domain(imapsieve_t, imapsieve_exec_t)
+userdom_user_application_domain(imapsieve_t, imapsieve_exec_t)
+
+#domtrans_pattern(dovecot_t,	imapsieve_exec_t,	imapsieve_t)
+#domtrans_pattern(dovecot_t,	spamc_exec_t,		spamc_t)
+
+domtrans_pattern(imapsieve_t,		spamc_exec_t,		spamc_t)
+
+spamassassin_exec_client(dovecot_t)
+spamassassin_exec_client(imapsieve_t)
+
+
+filetrans_add_pattern(dovecot_t,	mail_spool_t,		mail_spool_dovecot_attr_t,	{ file }, "dovecot-uidlist" )
+filetrans_add_pattern(dovecot_t,	mail_spool_t,		mail_spool_dovecot_attr_t,	{ file }, "dovecot-keywords" )
+
+filetrans_add_pattern(dovecot_t,	mail_spool_t,		mail_spool_dovecot_index_t,	{ file }, "dovecot.index" )
+filetrans_add_pattern(dovecot_t,	mail_spool_t,		mail_spool_dovecot_index_t,	{ file }, "dovecot.index.cache" )
+
+filetrans_add_pattern(dovecot_t,	mail_spool_t,		mail_spool_dovecot_log_t,	{ file }, "dovecot.index.log" )
+
+filetrans_add_pattern(dovecot_t,	imapsieve_script_t,	imapsieve_script_t,	{ file } )
+filetrans_pattern(dovecot_t,		imapsieve_tmp_t,	imapsieve_tmp_t,	{ file lnk_file fifo_file sock_file } )
+
+filetrans_pattern(imapsieve_t,		imapsieve_tmp_t,	imapsieve_tmp_t,	{ dir file lnk_file fifo_file sock_file } )
+filetrans_pattern(imapsieve_t,		imapsieve_run_t,	imapsieve_run_t,	{ dir file } )
+
+corecmd_read_bin_files(imapsieve_t)
+corecmd_check_exec_shell(imapsieve_t)
+corecmd_exec_bin(imapsieve_t)
+
+files_search_locks(imapsieve_t)
+files_read_var_files(imapsieve_t)
+files_read_var_symlinks(imapsieve_t)
+files_read_var_lib_files(imapsieve_t)
+
+dev_read_rand(imapsieve_t)
+auth_read_passwd(imapsieve_t)
+kernel_read_system_state(imapsieve_t)
+
+
+allow	dovecot_t	spamc_t:process			{ sigkill signal };
+
+allow	dovecot_t	mail_spool_dovecot_file:file	manage_file_perms;
+
+allow	dovecot_t	mail_spam_userpref_t:dir	list_dir_perms;
+allow	dovecot_t	mail_spam_userpref_t:file	read_file_perms;
+
+allow	dovecot_t	etc_mail_t:dir			list_dir_perms;
+allow	dovecot_t	etc_mail_t:file			read_file_perms;
+allow	dovecot_t	etc_mail_t:lnk_file		read_lnk_file_perms;
+
+allow	dovecot_t	spamd_var_lib_t:dir		list_dir_perms;
+allow	dovecot_t	spamd_var_lib_t:file		read_file_perms;
+allow	dovecot_t	spamd_var_lib_t:lnk_file	read_lnk_file_perms;
+
+allow	dovecot_t	imapsieve_script_t:dir		{ list_dir_perms add_name };
+allow	dovecot_t	imapsieve_script_t:file		{ read_file_perms create_file_perms };
+allow	dovecot_t	imapsieve_exec_t:file		{ read_file_perms exec_file_perms };
+
+allow	dovecot_t	imapsieve_tmp_t:dir		rw_dir_perms;
+allow	dovecot_t	imapsieve_tmp_t:file		manage_file_perms;
+allow	dovecot_t	imapsieve_tmp_t:lnk_file	manage_lnk_file_perms;
+allow	dovecot_t	imapsieve_tmp_t:fifo_file	manage_fifo_file_perms;
+allow	dovecot_t	imapsieve_tmp_t:sock_file	manage_sock_file_perms;
+
+allow	imapsieve_t	imapsieve_file:dir		list_dir_perms;
+allow	imapsieve_t	imapsieve_file:file		read_file_perms;
+
+allow	imapsieve_t	imapsieve_script_t:dir		list_dir_perms;
+allow	imapsieve_t	imapsieve_script_t:file		read_file_perms;
+
+allow	imapsieve_t	imapsieve_tmp_t:dir		rw_dir_perms;
+allow	imapsieve_t	imapsieve_tmp_t:file		manage_file_perms;
+allow	imapsieve_t	imapsieve_tmp_t:lnk_file	manage_lnk_file_perms;
+allow	imapsieve_t	imapsieve_tmp_t:fifo_file	manage_fifo_file_perms;
+allow	imapsieve_t	imapsieve_tmp_t:sock_file	manage_sock_file_perms;
+
+allow	imapsieve_t	imapsieve_run_t:dir		rw_dir_perms;
+allow	imapsieve_t	imapsieve_run_t:file		manage_file_perms;
+
+allow	imapsieve_t	mail_spool_t:dir		list_dir_perms;;
+allow	imapsieve_t	mail_spool_t:file		getattr;
+
+##
+
+allow	spamc_t		dovecot_t:process		sigchld;
+
+allow	spamc_t		imapsieve_file:dir		list_dir_perms;
+allow	spamc_t		imapsieve_file:file		read_file_perms;
+allow	spamc_t		imapsieve_exec_file:file	read_file_perms;
+
+allow	spamc_t		mail_spool_t:file		{ getattr read } ;
+
+allow	spamc_t		mail_spool_dovecot_file:file	read_file_perms;
+allow	spamc_t		mail_spool_dovecot_index_t:file	write;
+allow	spamc_t		mail_spool_dovecot_attr_t:file	write;
+allow	spamc_t		mail_spool_dovecot_log_t:file	append;
+

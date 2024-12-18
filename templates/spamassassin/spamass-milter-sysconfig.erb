@@ -1,0 +1,5 @@
+# For Postfix support, use a postfix-group-writable socket
+# for communication with the MTA
+#SOCKET="inet:<%= @milter_port %>@[127.0.0.1]"
+SOCKET="inet:<%= @milter_port %>"
+EXTRA_FLAGS="-m -r 10 -d rcpt -u sa-milt -e lurenzu.org -i 127.0.0.1/32,10.255.0.0/16 -i fd5c:b82f:2918:613d::/54 -i fec0:255::/16,::1/128 -- --max-size=2097152"

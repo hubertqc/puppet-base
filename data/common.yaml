@@ -1,0 +1,16 @@
+---
+base::core::netlabel::interfaces:
+        - 'lo'
+        - 'br0'
+base::mailtasks::dovecot_server: false
+base::mailtasks::dovecot_active_server: false
+base::mailtasks::opendmarc_report_server: false
+base::vpnserver::dhparam_numbits: 4096
+base::vpnserver::clients_mask: '255.255.255.240'
+base::core::openvpn::log_vg: ""
+base::dovecot::pg_host: postgres.ip6.tartar.lurenzu.org
+base::dovecot::pg_dbname: mail_system
+base::dovecot::pg_user: dovecot
+base::dovecot::pg_passwd: '260f56d344c8534e58c4fb0c24966709000a3cb58222324798956808e75a1344'
+base::dovecot::replication_password: '2753b8b2cec6243ef88ea350c6e54b33475af7e055a1a2f5f092d6b67d7c7732'
+

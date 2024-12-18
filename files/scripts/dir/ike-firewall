@@ -1,0 +1,12 @@
+#!/bin/bash
+firewall-cmd --permanent --new-service=isakmp
+firewall-cmd --permanent --service=isakmp --add-port=500/udp
+firewall-cmd --permanent --service=isakmp --add-port=500/tcp
+firewall-cmd --permanent --new-service=ipsec-nat-t
+firewall-cmd --permanent --service=ipsec-nat-t --add-port=4500/udp
+firewall-cmd --permanent --service=ipsec-nat-t --add-port=4500/tcp
+
+firewall-cmd --permanent --zone=internal --add-service=isakmp
+firewall-cmd --permanent --zone=internal --add-service=ipsec-nat-t
+
+firewall-cmd --reload

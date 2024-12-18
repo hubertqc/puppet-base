@@ -1,0 +1,31 @@
+#!/bin/bash
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+where_am_i=$( hostname -s )
+
+#
+## When on Ouranos
+#
+
+if [ "${where_am_i}" = "ouranos" ]
+then
+	chown postfix /etc/letsencrypt/archive/mail.olympe.lurenzu.org/privkey*.pem
+	systemctl restart postfix
+
+	for server in gaia chaos promethee
+	do
+		rc=0
+		for D in /etc/letsencrypt/archive/mail.olympe.lurenzu.org/ /etc/letsencrypt/live/mail.olympe.lurenzu.org/
+		do
+			rsync -a --delete $D ${server}:$D
+			rc=$?
+
+			RC=$(( $RC + $rc ))
+		done
+
+		ssh ${server} "systemctl restart postfix"
+	done
+fi
+
+exit $RC

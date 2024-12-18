@@ -1,0 +1,8 @@
+[Unit]
+After=syslog.target network-online.target sys-subsystem-net-devices-<%= @networking['primary'] %>.device
+Wants=network-online.target
+
+[Install]
+WantedBy=multi-user.target
+WantedBy=openvpn.target
+

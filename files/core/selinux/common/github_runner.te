@@ -1,0 +1,315 @@
+############################################################################
+#
+#	GitHub runner SELinux policymodule
+#
+#
+# Copyright (c) 2022 H. Quarantel-Colombani <hubert@quarantel.name>
+# Author: Hubert Quarantel-Colombani <hubert@quarantel.name>
+#
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of version 2 of the GNU General Public License as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#
+############################################################################
+
+policy_module(github_runner, 0.5.2)
+
+########################################
+#
+#	Types and attributes declarations
+#
+########################################
+
+attribute	github_runner_file_type;
+
+systemd_domain_template(github_runner)
+
+type		github_runner_port_t;
+corenet_port(github_runner_port_t)
+
+type		github_runner_conf_t;
+typeattribute	github_runner_conf_t	github_runner_file_type;
+files_config_file(github_runner_conf_t)
+
+type		github_runner_auth_t;
+typeattribute	github_runner_auth_t	github_runner_file_type;
+files_auth_file(github_runner_auth_t)
+
+type		github_runner_log_t;
+typeattribute	github_runner_log_t	github_runner_file_type;
+logging_log_file(github_runner_log_t)
+
+type		github_runner_var_t;
+typeattribute	github_runner_var_t	github_runner_file_type;
+files_type(github_runner_var_t)
+
+type 		github_runner_run_t;
+typeattribute	github_runner_run_t	github_runner_file_type;
+files_type(github_runner_run_t)
+
+type		github_runner_bin_t;
+typeattribute	github_runner_bin_t	github_runner_file_type;
+application_executable_file(github_runner_bin_t)
+
+type		github_runner_dynbin_t;
+typeattribute	github_runner_dynbin_t	github_runner_file_type;
+application_executable_file(github_runner_dynbin_t)
+
+type		github_runner_lib_t;
+typeattribute	github_runner_lib_t	github_runner_file_type;
+files_type(github_runner_lib_t)
+
+type		github_runner_work_t;
+typeattribute	github_runner_work_t	github_runner_file_type;
+files_type(github_runner_work_t)
+
+type		github_runner_tmp_t;
+typeattribute	github_runner_tmp_t	github_runner_file_type;
+files_tmp_file(github_runner_tmp_t)
+
+type		github_runner_unit_file_t;
+systemd_unit_file(github_runner_unit_file_t);
+
+bool	allow_sysadm_write_github_runner_files	false;
+
+gen_require(`
+	type	http_port_t;
+	type	node_t;
+
+	type	proc_t;
+	type	proc_net_t;
+	type	sysfs_t;
+	type	fs_t;
+	type	sysctl_net_t;
+
+	type	bin_t;
+	type	tmp_t;
+	type	shell_exec_t;
+	type	passwd_file_t;
+	type	cert_t;
+
+	type	user_tmp_t;
+	type	user_home_dir_t;
+
+	type	sysadm_t;
+	type	logadm_t;
+
+	role	system_r;
+	
+	attribute	domain;
+')
+
+########################################
+#
+#	Policy for github_runner_t domain
+#
+########################################
+
+role	system_r	types	github_runner_t;
+
+mcs_constrained(github_runner_t)
+
+#
+## Allow generic usage of the host
+#
+
+corecmd_read_bin_files(github_runner_t)
+corecmd_exec_all_executables(github_runner_t)
+files_exec_usr_files(github_runner_t)
+files_exec_etc_files(github_runner_t)
+files_search_locks(github_runner_t)
+files_read_var_files(github_runner_t)
+files_read_var_symlinks(github_runner_t)
+files_read_generic_spool(github_runner_t)
+files_read_var_lib_files(github_runner_t)
+files_getattr_lost_found_dirs(github_runner_t)
+files_read_config_files(github_runner_t)
+fs_read_noxattr_fs_files(github_runner_t)
+fs_read_noxattr_fs_symlinks(github_runner_t)
+fs_rw_cgroup_files(github_runner_t)
+application_getattr_socket(github_runner_t)
+
+dev_read_rand(github_runner_t)
+dev_read_sysfs(github_runner_t)
+
+logging_send_syslog_msg(github_runner_t)
+logging_send_audit_msgs(github_runner_t)
+
+#
+##	Permissions on self resources
+#
+
+#allow	github_runner_t	self:capability	{ chown	dac_read_search fowner fsetid kill };
+allow	github_runner_t	self:process	{ signal_perms setsockcreate execmem getsession setsched };
+allow	github_runner_t	self:dir	list_dir_perms;
+allow	github_runner_t	self:file	{ getattr read };
+allow	github_runner_t	self:lnk_file	read_lnk_file_perms;
+allow	github_runner_t	self:fifo_file	rw_fifo_file_perms;
+allow	github_runner_t	self:sem	create_sem_perms;
+allow	github_runner_t	self:shm	create_shm_perms;
+
+allow	github_runner_t	self:tcp_socket			create_stream_socket_perms;
+allow	github_runner_t	self:udp_socket			create_stream_socket_perms;
+allow	github_runner_t	self:unix_dgram_socket		create_socket_perms;
+allow	github_runner_t	self:unix_stream_socket		{ create_stream_socket_perms connectto };
+allow	github_runner_t	self:netlink_selinux_socket	create_socket_perms;
+allow	github_runner_t	self:netlink_route_socket	{ bind create getattr nlmsg_read };
+
+#
+##	Permission on other system resources
+#
+
+allow	github_runner_t	sysctl_net_t:dir	search;
+allow	github_runner_t	sysctl_net_t:file	{ getattr open read };
+
+allow	github_runner_t	fs_t:filesystem		{ getattr };
+
+allow	github_runner_t	sysfs_t:dir		{ getattr search open read };
+
+allow	github_runner_t	proc_t:dir		list_dir_perms;
+allow	github_runner_t	proc_t:file		{ read open getattr };
+
+allow	github_runner_t	proc_net_t:file		{ read open getattr };
+
+allow	github_runner_t	bin_t:file		exec_file_perms;
+
+allow	github_runner_t	tmp_t:dir		{ rw_dir_perms create rmdir };
+allow	github_runner_t	tmp_t:file		{ manage_file_perms execute };
+
+allow	github_runner_t	user_tmp_t:dir		rw_dir_perms;
+allow	github_runner_t	user_tmp_t:file		{ manage_file_perms map };
+
+allow	github_runner_t	user_home_dir_t:dir	{ list_dir_perms };
+
+allow	github_runner_t	passwd_file_t:file	{ read	open	getattr };
+allow	github_runner_t	shell_exec_t:file	{ getattr	open	read	execute};
+
+allow	github_runner_t	cert_t:dir		list_dir_perms;
+allow	github_runner_t	cert_t:file		read_file_perms;
+allow	github_runner_t	cert_t:lnk_file		read_lnk_file_perms;
+
+#
+##	Permissions	on	Springboot	specific	resources
+#
+
+#	Allow	to	perform	network	operations
+allow	github_runner_t	node_t:tcp_socket			{ node_bind };
+
+allow	github_runner_t	http_port_t:tcp_socket			{ name_bind	name_connect };
+
+#	Permissions	on	Springboot	specific	files/dirs
+
+allow	github_runner_t	github_runner_file_type:dir		list_dir_perms;
+allow	github_runner_t	github_runner_file_type:file		read_file_perms;
+allow	github_runner_t	github_runner_file_type:lnk_file	read_lnk_file_perms;
+
+allow	github_runner_t	github_runner_bin_t:file		exec_file_perms;
+allow	github_runner_t	github_runner_dynbin_t:file		{ manage_file_perms exec_file_perms };
+
+allow	github_runner_t	github_runner_lib_t:file		map;
+
+allow	github_runner_t	github_runner_exec_t:file		exec_file_perms;
+
+allow	github_runner_t	github_runner_auth_t:file		{ create_file_perms append_file_perms write_file_perms };
+allow	github_runner_t	github_runner_conf_t:file		{ create_file_perms append_file_perms write_file_perms };
+
+allow	github_runner_t	github_runner_var_t:dir			manage_dir_perms;
+
+filetrans_add_pattern(github_runner_t,	github_runner_var_t,	github_runner_dynbin_t,	file,	"run-helper.sh" )
+filetrans_add_pattern(github_runner_t,	github_runner_var_t,	github_runner_conf_t,	file,	".env" )
+filetrans_add_pattern(github_runner_t,	github_runner_var_t,	github_runner_conf_t,	file,	".path" )
+filetrans_add_pattern(github_runner_t,	github_runner_var_t,	github_runner_conf_t,	file,	".runner" )
+filetrans_add_pattern(github_runner_t,	github_runner_var_t,	github_runner_auth_t,	file,	".credentials" )
+filetrans_add_pattern(github_runner_t,	github_runner_var_t,	github_runner_auth_t,	file,	".credentials_rsaparams" )
+
+filetrans_add_pattern(github_runner_t,	github_runner_var_t,	github_runner_run_t,	dir, "_diag" )
+filetrans_add_pattern(github_runner_t,	github_runner_var_t,	github_runner_work_t,	dir, "_work" )
+
+filetrans_add_pattern(github_runner_t,	github_runner_var_t,	github_runner_var_t,	{ dir notdevfile_class_set } )
+
+allow	github_runner_t	github_runner_run_t:dir		manage_dir_perms;
+allow	github_runner_t	github_runner_run_t:file	manage_file_perms;
+allow	github_runner_t	github_runner_run_t:lnk_file	manage_lnk_file_perms;
+allow	github_runner_t	github_runner_run_t:sock_file	{ create_sock_file_perms rw_sock_file_perms };
+allow	github_runner_t	github_runner_run_t:fifo_file	{ create_fifo_file_perms rw_fifo_file_perms };
+
+filetrans_add_pattern(github_runner_t,	github_runner_run_t,	github_runner_run_t,	{ dir notdevfile_class_set } )
+
+allow	github_runner_t	github_runner_work_t:dir		manage_dir_perms;
+allow	github_runner_t	github_runner_work_t:file		{ manage_file_perms exec_file_perms };
+allow	github_runner_t	github_runner_work_t:lnk_file		manage_lnk_file_perms;
+allow	github_runner_t	github_runner_work_t:sock_file		{ create_sock_file_perms rw_sock_file_perms };
+allow	github_runner_t	github_runner_work_t:fifo_file		{ create_fifo_file_perms rw_fifo_file_perms };
+
+filetrans_add_pattern(github_runner_t,	github_runner_work_t,	github_runner_work_t,	{ dir notdevfile_class_set } )
+filetrans_add_pattern(github_runner_t,	github_runner_work_t,	github_runner_dynbin_t,	file, "licensed-check.sh" )
+filetrans_add_pattern(github_runner_t,	github_runner_work_t,	github_runner_dynbin_t,	file, "licensed-download.sh" )
+filetrans_add_pattern(github_runner_t,	github_runner_work_t,	github_runner_dynbin_t,	file, "licensed-generate.sh" )
+
+allow	github_runner_t	github_runner_tmp_t:dir			manage_dir_perms;
+allow	github_runner_t	github_runner_tmp_t:file		{ manage_file_perms map };
+allow	github_runner_t	github_runner_tmp_t:lnk_file		manage_lnk_file_perms;
+allow	github_runner_t	github_runner_tmp_t:sock_file		manage_sock_file_perms;
+allow	github_runner_t	github_runner_tmp_t:fifo_file		manage_fifo_file_perms;
+filetrans_add_pattern(github_runner_t,	github_runner_tmp_t,	github_runner_tmp_t,	{ dir notdevfile_class_set } )
+filetrans_add_pattern(github_runner_t,	tmp_t,			github_runner_tmp_t,	{ dir notdevfile_class_set } )
+
+allow	github_runner_t	github_runner_log_t:dir			add_entry_dir_perms;
+allow	github_runner_t	github_runner_log_t:file		{ create_file_perms append_file_perms read_file_perms rename_file_perms };
+logging_log_filetrans(github_runner_t,	github_runner_log_t,	{ file	dir }	)
+
+#
+##
+#
+
+domain_search_all_domains_state(github_runner_t)
+allow		github_runner_t	domain:dir			list_dir_perms;
+allow		github_runner_t	domain:notdevfile_class_set	getattr;
+dontaudit	github_runner_t	domain:notdevfile_class_set	{ open read };
+
+#
+##	Permissions for Sys admins (sysadm_t)
+#
+
+allow	sysadm_t	github_runner_file_type:dir			list_dir_perms;
+allow	sysadm_t	github_runner_file_type:notdevfile_class_set	getattr;
+allow	sysadm_t	github_runner_file_type:lnk_file		read_lnk_file_perms;
+
+allow	sysadm_t	github_runner_bin_t:file		exec_file_perms;
+
+allow	sysadm_t	github_runner_conf_t:file		read_file_perms;
+allow	sysadm_t	github_runner_work_t:file		read_file_perms;
+allow	sysadm_t	github_runner_var_t:file		read_file_perms;
+allow	sysadm_t	github_runner_run_t:file		read_file_perms;
+allow	sysadm_t	github_runner_tmp_t:file		read_file_perms;
+allow	sysadm_t	github_runner_lib_t:file		read_file_perms;
+allow	sysadm_t	github_runner_log_t:file		read_file_perms;
+allow	sysadm_t	github_runner_exec_t:file		read_file_perms;
+
+
+allow	sysadm_t	github_runner_unit_file_t:file	read_file_perms;
+allow	sysadm_t	github_runner_unit_file_t:service	manage_service_perms;
+
+if	(allow_sysadm_write_github_runner_files)	{
+	allow	sysadm_t	github_runner_tmp_t:dir	rw_dir_perms;
+	allow	sysadm_t	github_runner_log_t:dir	del_entry_dir_perms;
+	allow	sysadm_t	github_runner_conf_t:dir	del_entry_dir_perms;
+	allow	sysadm_t	github_runner_run_t:dir	del_entry_dir_perms;
+
+	allow	sysadm_t	github_runner_run_t:file	{ delete_file_perms	rename_file_perms };
+	allow	sysadm_t	github_runner_tmp_t:file	manage_file_perms;
+	allow	sysadm_t	github_runner_log_t:file	{ delete_file_perms	rename_file_perms };
+	allow	sysadm_t	github_runner_conf_t:file	write_file_perms;
+}
+
+

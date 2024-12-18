@@ -1,0 +1,4 @@
+/var/opt/backup/PgSQL(/.*)?			gen_context(system_u:object_r:postgresql_backup_t,s0)
+/var/lib/pgsql/backups(/.*)?			gen_context(system_u:object_r:postgresql_backup_t,s0)
+/var/lib/postgres(ql)?/backups(/.*)?		gen_context(system_u:object_r:postgresql_backup_t,s0)
+/opt/scripts/PgSQLdump			--	gen_context(system_u:object_r:postgresql_dbadm_script_t,s0)

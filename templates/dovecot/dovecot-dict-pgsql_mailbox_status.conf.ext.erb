@@ -1,0 +1,12 @@
+connect = host=<%= @pg_host %> dbname=<%= @pg_dbname %> user=<%= @pg_user %> password=<%= @pg_passwd %>
+
+map {
+  pattern = priv/status/$box
+  table = mailbox_status
+  value_field = status
+  username_field = login
+
+  fields {
+    mailbox = $box
+  }
+}

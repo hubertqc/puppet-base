@@ -1,0 +1,25 @@
+[Unit]
+<% @facts['networking']['interfaces'].each do |ifname, params|
+     if @interfaces.include?(ifname)
+       device = false
+       if params.has_key?('ip')
+         device = true
+       end
+       if params.has_key?('bindings6')
+         params['bindings6'].each do |binding|
+	   if binding.has_key?('address')
+             device = true
+	   end
+         end
+       end
+       if device
+-%>
+Wants=sys-subsystem-net-devices-<%= ifname %>.device
+After=sys-subsystem-net-devices-<%= ifname %>.device
+<%     end
+     end
+   end %>
+
+[Service]
+ExecStartPre=-/usr/sbin/netlabel-config reset
+ExecStartPre=-/usr/sbin/netlabel-config reset

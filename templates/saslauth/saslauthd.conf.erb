@@ -1,0 +1,5 @@
+ldap_servers: ldaps://ouranos.olympe.lurenzu.org/ ldaps://promethee.olympe.lurenzu.org/ ldaps://chaos.olympe.lurenzu.org/ ldaps://gaia.olympe.lurenzu.org/
+ldap_search_base: dc=top
+ldap_use_sasl: no
+ldap_auth_method: bind
+ldap_filter: (&(objectClass=CourierMailAccount)(|(mailbox=%u)(mailbox=%d/%n)(mail=%u)))

@@ -1,0 +1,109 @@
+## Example as taken from John Denker's IPv6 IPsec page at:
+## http://www.av8n.com/computer/htm/ipv6-howto.htm#htoc19
+##
+## Note that IPv6 only works with the NETKEY stack
+##
+## (keys have not been fully written out in the examples)
+#
+#conn ipv6-backbone-gaia-promethee
+#	also=ipv6-backbone
+#	#
+#	leftid="promethee.tartar.lurenzu.org"
+#	left="fd5c:b82f:2918:613d::4"
+#	leftprotoport="tcp/5432"
+#	#
+#	rightid="gaia.tartar.lurenzu.org"
+#	right="fd5c:b82f:2918:613d::1"
+#
+#conn ipv6-backbone-ouranos-promethee
+#	also=ipv6-backbone
+#	#
+#	leftid="promethee.tartar.lurenzu.org"
+#	left="fd5c:b82f:2918:613d::4"
+#	leftprotoport="tcp/5432"
+#	#
+#	rightid="ouranos.tartar.lurenzu.org"
+#	right="fd5c:b82f:2918:613d::2"
+#
+#conn ipv6-backbone-chaos-promethee
+#	also=ipv6-backbone
+#	#
+#	leftid="promethee.tartar.lurenzu.org"
+#	left="fd5c:b82f:2918:613d::4"
+#	leftprotoport="tcp/5432"
+#	#
+#	rightid="chaos.tartar.lurenzu.org"
+#	right="fd5c:b82f:2918:613d::3"
+#
+#conn ipv6-backbone-nyx-promethee
+#	also=ipv6-backbone
+#	#
+#	leftid="promethee.tartar.lurenzu.org"
+#	left="fd5c:b82f:2918:613d::4"
+#	leftprotoport="tcp/5432"
+#	#
+#	rightid="nyx.tartar.lurenzu.org"
+#	right="fd5c:b82f:2918:613d::5"
+#
+#conn ipv6-backbone-ligeria-promethee
+#	also=ipv6-backbone
+#	#
+#	leftid="promethee.tartar.lurenzu.org"
+#	left="fd5c:b82f:2918:613d::4"
+#	leftprotoport="tcp/5432"
+#	#
+#	rightid="ligeria.tartar.lurenzu.org"
+#	right="fd5c:b82f:2918:613d::6"
+#
+#
+#
+#
+#
+#
+#
+#conn ipv6-backbone-promethee-gaia
+#	also=ipv6-backbone
+#	#
+#	leftid="promethee.tartar.lurenzu.org"
+#	left="fd5c:b82f:2918:613d::4"
+#	#
+#	rightid="gaia.tartar.lurenzu.org"
+#	right="fd5c:b82f:2918:613d::1"
+#	rightprotoport="tcp/5432"
+#
+#conn ipv6-backbone-promethee-ouranos
+#	also=ipv6-backbone
+#	#
+#	leftid="promethee.tartar.lurenzu.org"
+#	left="fd5c:b82f:2918:613d::4"
+#	#
+#	rightid="ouranos.tartar.lurenzu.org"
+#	right="fd5c:b82f:2918:613d::2"
+#	rightprotoport="tcp/5432"
+#
+#conn ipv6-backbone-promethee-chaos
+#	also=ipv6-backbone
+#	#
+#	leftid="promethee.tartar.lurenzu.org"
+#	left="fd5c:b82f:2918:613d::4"
+#	#
+#	rightid="chaos.tartar.lurenzu.org"
+#	right="fd5c:b82f:2918:613d::3"
+#	rightprotoport="tcp/5432"
+#
+#
+#
+#
+##conn backbone-fd5c
+##	also=ipv6-backbone
+##	#
+##	left="fd5c:b82f:2918:613d::4"
+##	#
+##	right=%group
+##
+##conn backbone-fec0
+##	also=ipv6-backbone
+##	#
+##	left="fec0:255::4"
+##	#
+##	right=%group

@@ -1,0 +1,79 @@
+;
+;
+;
+
+user	nobody
+group	openvpn
+
+
+local	<%= @ipaddress %>
+
+
+proto	udp
+port	1194
+
+dev	tun
+tun-ipv6
+
+keepalive	10 120
+persist-key
+persist-tun
+
+comp-lzo
+
+;
+; Cryptograhic options
+;
+tls-server
+capath		/etc/pki/tls/certs
+ca		/etc/letsencrypt/live/vpn.lurenzu.org/chain.pem
+extra-certs	/etc/letsencrypt/live/vpn.lurenzu.org/chain.pem
+cert		/etc/letsencrypt/live/vpn.lurenzu.org/fullchain.pem
+key		/etc/letsencrypt/live/vpn.lurenzu.org/privkey.pem
+dh		/etc/openvpn/vpn-server.dh.pem
+
+tls-exit
+tls-version-min		1.2
+tls-cipher		TLS-DHE-RSA-WITH-AES-256-GCM-SHA384:TLS-DHE-RSA-WITH-AES-256-CBC-SHA256:TLS-DHE-RSA-WITH-AES-128-GCM-SHA256:TLS-DHE-RSA-WITH-AES-128-CBC-SHA256
+
+;tls-auth ta.key 0 # This file is scret
+
+;cipher BF-CBC        # Blowfish (default)
+;cipher AES-128-CBC   # AES
+;cipher DES-EDE3-CBC  # Triple-DES
+
+
+;
+; Networking options
+;
+
+server	<%= @clients_subnet %>	<%= @clients_mask %>
+
+ifconfig-pool-persist /etc/openvpn/vpn-server.persist-ip-client.txt
+
+push	"route 10.255.0.0 255.255.255.0"
+push	"redirect-private def1"
+push	"dhcp-option DNS 10.255.0.1"
+push	"dhcp-option DNS 10.255.0.3"
+push	"dhcp-option DOMAIN tartar.lurenzu.org"
+
+#duplicate-cn
+client-to-client
+max-clients		100
+
+client-config-dir	/etc/openvpn/client
+
+;learn-address ./script
+
+
+;
+; Logging options
+;
+
+;status /var/log/openvpn/server-status.log
+log-append  /var/log/openvpn/vpn.log
+
+verb 3
+
+;mute 20
+

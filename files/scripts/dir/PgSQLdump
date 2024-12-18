@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# 322e386415c4b87b64d71ec1b3d10b2ad2a7e3ef88b386805c85a71f9f690523
+
+RC=0
+
+TS=$(/bin/date +%Y%m%d.%H%M)
+DUMP_DIR="/var/lib/pgsql/backups"
+HOST=$( hostname -s )
+
+DB_list=$( /usr/bin/psql -l -t | awk '( /^[[:blank:]]+[[:alnum:]]+/ ) {print $1}' )
+
+for DB in ${DB_list}
+do
+	[ "$DB" = "postgres" ] && continue
+	echo $DB | grep -q ^template && continue
+
+	DUMP_FILE=$DB.${TS}.pgdump
+
+	/usr/bin/pg_dump -Fc -c -f ${DUMP_DIR}/${DUMP_FILE} $DB
+	rc=$?
+
+	[ $rc -eq 0 ] && bzip2 ${DUMP_DIR}/${DUMP_FILE}
+	[ $rc -eq 0 ] && scp ${DUMP_DIR}/${DUMP_FILE}.bz2 gaia:/var/opt/backup/PgSQL/${HOST}-${DUMP_FILE}.bz2
+
+	RC=$(( $RC + $rc ))
+done
+
+/usr/bin/find ${DUMP_DIR} -type f -mtime +7 -print0 | /usr/bin/xargs -0 -r -n 200 /bin/rm -f
+
+exit $RC

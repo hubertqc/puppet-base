@@ -1,0 +1,184 @@
+#!/bin/bash
+
+
+declare -i DumpLevel
+declare -i rc
+
+rc=0
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+LOGFILE=/var/tmp/$$.log
+
+#
+
+if [ $# -ne 3 ]
+then
+	echo "Usage: $(basename $0) <Dump destination> <FS> <dump level>" >&2
+	exit 2
+fi
+
+DumpDest=$1
+DumpFS=$2
+DumpLevel=$3
+
+if [ ! ${DumpLevel} = $3 ]
+then
+	echo "$3 is not a valid integer for dump level" >&2
+	exit 3
+fi
+
+if [ ${DumpLevel} -gt 9 ]
+then
+	echo "Dump level must be between 0 and 9" >&2
+	exit 3
+fi
+
+
+if [ ! -d ${DumpDest} ]
+then
+	echo "${DumpDest} is not a valid directory" >&2
+	exit 3
+fi
+
+mount | egrep -q "^/[^[:blank:]]+[[:blank:]]+on[[:blank:]]+${DumpFS}[[:blank:]]+type[[:blank:]]+xfs[[:blank:]]+"
+grep_rc=$?
+
+if [ ${grep_rc} -ne 0 ]
+then
+	echo "${DumpFS} is not a valid mounted XFS filesystem" >&2
+	exit 3
+fi
+
+
+FS_Dev=$( df ${DumpFS} | awk 'NR==2 { print $1 }' )
+
+if [ -r "${FS_Dev}" ]
+then
+	tmpfile=/dev/shm/$(basename $0).$$
+
+	lvdisplay ${FS_Dev} > ${tmpfile}
+	if [ $? -eq 0 ]
+	then
+		LV_path=$( awk '/LV Path/ { print $NF }' ${tmpfile} )
+		VG_name=$( echo ${LV_path} | awk -F "/" '{print $3}' )
+		LV_name=$( echo ${LV_path} | awk -F "/" '{print $4}' )
+		SNAP_LV_name="SNAP_${LV_name}"
+		
+		if [ ! -d ${DumpDest}/${VG_name}_${LV_name} ]
+		then
+			echo "First Snapshot/XFSdump ever for ${VG_name}/${LV_name}"
+
+			mkdir ${DumpDest}/${VG_name}_${LV_name}
+			FirstTimeEver=1
+		fi
+
+		echo "Snapshotting LV ${VG_name}/${LV_name}"
+
+		xfs_freeze -f ${DumpFS}
+		[ -d ${DumpDest}/${VG_name}_${LV_name}/LEVEL_${DumpLevel} ] || mkdir ${DumpDest}/${VG_name}_${LV_name}/LEVEL_${DumpLevel}
+		TIMESTAMP=$(date +%Y%m%d_%H%M)
+		touch ${DumpDest}/${VG_name}_${LV_name}/LEVEL_${DumpLevel}/${TIMESTAMP}
+
+		xfs_freeze -u ${DumpFS}
+		lvcreate -s -l 20%FREE -n ${SNAP_LV_name} ${VG_name}/${LV_name}
+		rc=$?
+
+		if [ $rc -eq 0 ]
+		then
+			mkdir /tmp/mnt_$$
+			mount -t xfs -o nouuid /dev/${VG_name}/${SNAP_LV_name} /tmp/mnt_$$
+			umount /dev/${VG_name}/${SNAP_LV_name}
+			rmdir /tmp/mnt_$$
+
+			Origin_XFS_UUID=$(xfs_admin -u /dev/${VG_name}/${LV_name} | awk '{print $NF}' )
+
+			if [ -z "${FirstTimeEver}" -a ! -r ${DumpDest}/${VG_name}_${LV_name}/.metadata ]
+			then
+				echo "Warning: metadata file ${DumpDest}/${VG_name}_${LV_name}/.metadata lost !"
+			fi
+
+			if [ ! -r ${DumpDest}/${VG_name}_${LV_name}/.metadata ]
+			then
+				xfs_admin -U generate /dev/${VG_name}/${SNAP_LV_name} > ${DumpDest}/${VG_name}_${LV_name}/.xfsuuid.generate.log 2>&1
+				rc=$?
+				
+				Snap_XFS_UUID=$(xfs_admin -u /dev/${VG_name}/${SNAP_LV_name} | awk '{print $NF}' )
+
+				if [ $rc -ne 0 ]
+				then
+					echo "Warning: could not generate new XFS UUID for /dev/${VG_name}/${SNAP_LV_name}"
+				fi
+
+				echo "Mount point = ${DumpFS}" > ${DumpDest}/${VG_name}_${LV_name}/.metadata
+				echo "Origin UUID = ${Origin_XFS_UUID}" >> ${DumpDest}/${VG_name}_${LV_name}/.metadata
+				echo "Snapshot UUID = ${Snap_XFS_UUID}" >> ${DumpDest}/${VG_name}_${LV_name}/.metadata
+			else
+				Snap_XFS_UUID=$(awk '/^Snapshot UUID *= */ { print $NF }' ${DumpDest}/${VG_name}_${LV_name}/.metadata)
+
+				xfs_admin -U ${Snap_XFS_UUID} /dev/${VG_name}/${SNAP_LV_name} > ${DumpDest}/${VG_name}_${LV_name}/.xfsuuid.set.log 2>&1
+				rc=$?
+
+				if [ $rc -ne 0 ]
+				then
+					echo "Warning: could not set XFS UUID for /dev/${VG_name}/${SNAP_LV_name}"
+				fi
+			fi
+
+
+			MntPnt=/tmp/$(basename $0).$$.${LV_name}
+			mkdir ${MntPnt}
+
+			mount -o ro -t xfs  /dev/${VG_name}/${SNAP_LV_name} ${MntPnt}
+			rc=$?
+
+
+			if [ $rc -eq 0 ]
+			then
+				XFSDUMP_log=${DumpDest}/${VG_name}_${LV_name}/LEVEL_${DumpLevel}/xfsdump_${TIMESTAMP}.log
+
+				xfsdump -F -l ${DumpLevel} -L "Level ${DumpLevel}: ${TIMESTAMP}" -f ${DumpDest}/${VG_name}_${LV_name}/LEVEL_${DumpLevel}/${VG_name}_${LV_name}_level${DumpLevel}-${TIMESTAMP}.xfsdmp ${MntPnt} > ${XFSDUMP_log} 2>&1
+				rc=$?
+
+				if [ $rc -eq 0 ]
+				then
+					echo "XFS dump successful, logfile is ${XFSDUMP_log}"
+					touch ${DumpDest}/${VG_name}_${LV_name}/LEVEL_${DumpLevel}/${TIMESTAMP}_OK
+				else
+					echo "XFS dump failed"
+
+					rm -f ${DumpDest}/${VG_name}_${LV_name}/LEVEL_${DumpLevel}/${TIMESTAMP}
+						
+					cat ${XFSDUMP_log}
+				fi
+
+				umount ${MntPnt}
+			else
+				echo "Error: could not mount snapshot FS /dev/${VG_name}/${LV_name}" >&2
+			fi
+
+			rmdir ${MntPnt}
+
+
+
+			echo "Removing snapshot LV ${SNAP_LV_name} for ${VG_name}/${SNAP_LV_name}"
+			lvremove --force ${VG_name}/${SNAP_LV_name}
+			rc=$?
+			if [ $rc -ne 0 ]
+			then
+				echo "Warning: could not remove snapshot LV ${SNAP_LV_name}, ${VG_name}/${LV_name} still impacted !" >&2
+			fi
+		else
+			echo "LVM snapshot failed" >&2
+		fi
+
+	fi
+
+	rm -f ${tmpfile}
+fi > $LOGFILE 2>&1
+
+[ $rc -ne 0 ] && cat $LOGFILE
+
+
+rm -f $LOGFILE
+
+exit $rc

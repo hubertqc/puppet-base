@@ -1,0 +1,56 @@
+#
+# Configuration file for the NetLabel subsystem.  This file should contain
+# individual commands for the netlabelctl utility to be run in order from the
+# top of the file to the bottom.
+#
+# See the netlabel-config(8) and netlabelctl(8) manpages for more information.
+#
+# https://github.com/netlabel
+#
+
+##
+## Example: Remove the default configuration and replace it with an address
+##          selector based configuration that send unlabeled traffic to all
+##          IPv4 and IPv6 addresses.
+##
+#
+cipsov4 add local doi:2
+
+calipso add pass doi:2
+
+unlbl add interface:lo	address:fec0:255::/64			label:system_u:object_r:netlabel_peer_t:s0
+unlbl add interface:lo	address:fd5c:b82f:2918:613d::/64	label:system_u:object_r:netlabel_peer_t:s0
+
+<% if @facts['networking']['interfaces'].has_key?('br0') %>
+unlbl add interface:br0	address:10.255.0.0/16			label:system_u:object_r:netlabel_peer_t:s0
+unlbl add interface:br0	address:fec0:255::/64			label:system_u:object_r:netlabel_peer_t:s0
+unlbl add interface:br0	address:fd5c:b82f:2918:613d::/64	label:system_u:object_r:netlabel_peer_t:s0
+<% end %>
+<% if @facts['networking']['interfaces'].has_key?('bridge0') %>
+unlbl add interface:bridge0	address:10.255.0.0/16			label:system_u:object_r:netlabel_peer_t:s0
+unlbl add interface:bridge0	address:fec0:255::/64			label:system_u:object_r:netlabel_peer_t:s0
+unlbl add interface:bridge0	address:fd5c:b82f:2918:613d::/64	label:system_u:object_r:netlabel_peer_t:s0
+<% end %>
+
+map del default
+
+map add default address:0.0.0.0/0	protocol:unlbl
+map add default address:::0/0		protocol:unlbl
+
+<% @facts['networking']['interfaces'].each do |ifname, params|
+     if @interfaces.include?(ifname)
+       if params.has_key?('ip')
+%>
+map add default address:<%= params['ip'] %>	protocol:cipsov4,2
+<%     end
+       if params.has_key?('bindings6')
+         params['bindings6'].each do |binding|
+	   if binding.has_key?('address')
+-%>
+map add default address:<%= binding['address'] %>	protocol:calipso,2
+<%-
+	   end
+         end
+       end
+     end
+   end %>

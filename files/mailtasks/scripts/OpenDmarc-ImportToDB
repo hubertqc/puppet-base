@@ -1,0 +1,24 @@
+#!/bin/bash
+ 
+RC=0
+
+
+DB_SERVER='ouranos.tartar.lurenzu.org'
+DB_SERVER='10.255.0.2'
+DB_USER='opendmarc'
+DB_PASS='0ff137fb818d69eca4def9eda1fedf21d2d7e8c2661011176e315cdb1299e350'
+DB_NAME='opendmarc'
+WORK_DIR='/var/spool/opendmarc'
+ 
+if [ -s ${WORK_DIR}/opendmarc.dat ]
+then
+	mv ${WORK_DIR}/opendmarc.dat ${WORK_DIR}/opendmarc_import.dat -f
+
+	/usr/sbin/opendmarc-import --dbhost=${DB_SERVER} --dbuser=${DB_USER} --dbpasswd=${DB_PASS} --dbname=${DB_NAME} --verbose < ${WORK_DIR}/opendmarc_import.dat >> /var/log/opendmarc/DB.log 2>&1
+	RC=$?
+
+	[ $RC -eq 0 ] && cat /dev/null > ${WORK_DIR}/opendmarc.dat
+	[ $RC -ne 0 ] && echo "Import history to DB failed."
+fi
+
+exit $RC

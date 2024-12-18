@@ -1,0 +1,14 @@
+#################################################################
+# This file is managed by Puppet                                #
+#################################################################
+
+#Time changes
+-a always,exit -F arch=b64 -S settimeofday -S adjtimex -F subj_type!=chronyd_t -k SYSTEM_TIME_CHANGED
+-a always,exit -F arch=b32 -S settimeofday -S adjtimex -F subj_type!=chronyd_t -k SYSTEM_TIME_CHANGED_32
+-a always,exit -F arch=b64 -S clock_settime -F a0=0x0 -F subj_type!=chronyd_t -k SYSTEM_TIME_CHANGED
+-a always,exit -F arch=b32 -S clock_settime -F a0=0x0 -F subj_type!=chronyd_t -k SYSTEM_TIME_CHANGED_32
+
+-a always,exit -F arch=b32 -S stime -F subj_type!=chronyd_t -k SYSTEM_TIME_CHANGED_32
+
+-w /etc/localtime -p wa -F subj_type=unconfined_t -k SYSTEM_TIME_CHANGED
+

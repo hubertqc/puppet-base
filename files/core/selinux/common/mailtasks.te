@@ -1,0 +1,218 @@
+policy_module(mailtasks, 0.4.4)
+
+gen_require(`
+	attribute	sepgsql_client_type;
+	attribute	sepgsql_spamassassin_domain;
+	attribute	sepgsql_spamassassin_upd_domain;
+
+        type 	dovecot_t;
+        type 	antivirus_t;
+        type 	dkim_milter_t;
+
+	type	postfix_smtp_t;
+	type	postfix_smtpd_t;
+	type	postfix_cleanup_t;
+
+        type	spamd_t;
+	type	spamd_update_t;
+        type	spamc_t;
+        type	spamc_exec_t;
+
+	type	sendmail_t;
+
+	type	mail_spool_t;
+	type	dovecot_var_run_t;
+
+	type	krb5_keytab_t;
+	type	shell_exec_t;
+	type	sendmail_exec_t;
+
+	type	postfix_spool_t;
+
+	type	system_cronjob_t;
+
+	type	postgresql_t;
+
+	type	named_t;
+')
+
+type	mailtasks_t;
+type	mailtasks_exec_t;
+type	mailtasks_script_t;
+type	mailtasks_lock_t;
+type	mailtasks_log_t;
+type	mailtasks_tmp_t;
+type	mailtasks_run_t;
+
+type	mail_spam_userpref_t;
+
+attribute	mailtasks_file;
+attribute	mailtasks_exec_file;
+
+files_type(mail_spam_userpref_t)
+files_type(mailtasks_script_t)
+files_type(mailtasks_exec_t)
+files_tmp_file(mailtasks_tmp_t)
+logging_log_file(mailtasks_log_t);
+files_lock_file(mailtasks_lock_t);
+
+typeattribute mailtasks_exec_t		mailtasks_file, mailtasks_exec_file;
+typeattribute mailtasks_script_t	mailtasks_file, mailtasks_exec_file;
+typeattribute mailtasks_tmp_t		mailtasks_file;
+typeattribute mailtasks_run_t		mailtasks_file;
+typeattribute mailtasks_log_t		mailtasks_file;
+typeattribute mailtasks_lock_t		mailtasks_file;
+
+typeattribute mailtasks_t		sepgsql_client_type;
+typeattribute mailtasks_t		sepgsql_spamassassin_domain;
+typeattribute mailtasks_t		sepgsql_spamassassin_upd_domain;
+role system_r types mailtasks_t;
+
+init_daemon_domain(mailtasks_t, mailtasks_exec_t)
+userdom_user_application_domain(mailtasks_t, mailtasks_exec_t)
+
+domtrans_pattern(system_cronjob_t,	mailtasks_exec_t,	mailtasks_t)
+domtrans_pattern(system_cronjob_t,	mailtasks_script_t,	mailtasks_t)
+
+#domtrans_pattern(mailtasks_t,		spamc_exec_t,		spamc_t)
+spamassassin_exec_client(mailtasks_t)
+spamassassin_read_lib_files(mailtasks_t)
+
+
+filetrans_pattern(mailtasks_t,		mailtasks_tmp_t,	mailtasks_tmp_t,	{ dir file lnk_file fifo_file sock_file } )
+filetrans_pattern(mailtasks_t,		mailtasks_run_t,	mailtasks_run_t,	{ dir file lnk_file fifo_file sock_file } )
+
+logging_log_filetrans(mailtasks_t,      mailtasks_log_t,	{ file dir } )
+files_lock_filetrans(mailtasks_t,	mailtasks_lock_t,	{ file dir } )
+
+mta_read_config(mailtasks_t)
+mta_delete_spool(mailtasks_t)
+mta_read_spool(mailtasks_t)
+
+corenet_tcp_connect_postgresql_port(mailtasks_t)
+
+corenet_out_generic_if(mailtasks_t)
+corenet_in_generic_if(mailtasks_t)
+
+corenet_in_generic_node(mailtasks_t)
+corenet_out_generic_node(mailtasks_t)
+
+corenet_udp_bind_generic_node(mailtasks_t)
+
+corecmd_read_bin_files(mailtasks_t)
+corecmd_check_exec_shell(mailtasks_t)
+corecmd_exec_bin(mailtasks_t)
+
+files_search_locks(mailtasks_t)
+files_read_var_files(mailtasks_t)
+files_read_var_symlinks(mailtasks_t)
+files_read_var_lib_files(mailtasks_t)
+
+sysnet_read_config(mailtasks_t)
+miscfiles_read_generic_certs(mailtasks_t)
+
+dev_read_rand(mailtasks_t)
+kernel_read_system_state(mailtasks_t)
+
+auth_read_passwd(mailtasks_t)
+sssd_run_stream_connect(mailtasks_t)
+
+kerberos_read_keytab(mailtasks_t)
+kerberos_read_config(mailtasks_t)
+
+allow	mailtasks_t	self:netlink_route_socket	{ bind create getattr nlmsg_read };
+allow	mailtasks_t	self:tcp_socket			{ connect create getattr getopt setopt };
+allow	mailtasks_t	self:udp_socket			{ bind connect create getattr ioctl setopt };
+
+allow	postgresql_t	mailtasks_t:peer	recv;
+allow	mailtasks_t	postgresql_t:peer	recv;
+
+allow	mailtasks_t	mailtasks_file:dir		list_dir_perms;
+allow	mailtasks_t	mailtasks_file:file		read_file_perms;
+
+allow	mailtasks_t	mailtasks_exec_file:file	exec_file_perms;
+
+allow	mailtasks_t	mailtasks_tmp_t:dir		rw_dir_perms;
+allow	mailtasks_t	mailtasks_tmp_t:file		manage_file_perms;
+allow	mailtasks_t	mailtasks_tmp_t:lnk_file	manage_lnk_file_perms;
+allow	mailtasks_t	mailtasks_tmp_t:fifo_file	manage_fifo_file_perms;
+allow	mailtasks_t	mailtasks_tmp_t:sock_file	manage_sock_file_perms;
+
+allow	mailtasks_t	mailtasks_run_t:dir		rw_dir_perms;
+allow	mailtasks_t	mailtasks_run_t:file		manage_file_perms;
+allow	mailtasks_t	mailtasks_run_t:lnk_file	manage_lnk_file_perms;
+allow	mailtasks_t	mailtasks_run_t:fifo_file	manage_fifo_file_perms;
+allow	mailtasks_t	mailtasks_run_t:sock_file	manage_sock_file_perms;
+
+allow	mailtasks_t	mailtasks_lock_t:dir		{ create rw_dir_perms };
+allow	mailtasks_t	mailtasks_lock_t:file		manage_file_perms;
+
+allow	mailtasks_t	mailtasks_log_t:dir		{ create add_entry_dir_perms};
+allow	mailtasks_t	mailtasks_log_t:file		{ create_file_perms append_file_perms };
+
+allow	mailtasks_t	mail_spool_t:dir		list_dir_perms;
+allow	mailtasks_t	mail_spool_t:file		getattr;
+
+
+allow	system_cronjob_t	mailtasks_file:dir		list_dir_perms;
+allow	system_cronjob_t	mailtasks_file:file		read_file_perms;
+
+##
+
+allow	spamc_t		mailtasks_file:dir		list_dir_perms;
+allow	spamc_t		mailtasks_file:file		read_file_perms;
+allow	spamc_t		mailtasks_exec_file:file	read_file_perms;
+
+##
+
+allow	spamd_t		mail_spam_userpref_t:dir	list_dir_perms;
+allow	spamd_t		mail_spam_userpref_t:file	read_file_perms;
+
+allow	spamc_t		mail_spam_userpref_t:dir	list_dir_perms;
+allow	spamc_t		mail_spam_userpref_t:file	read_file_perms;
+
+##
+
+#============= dkim_milter_t ==============
+kernel_read_network_state(dkim_milter_t)
+postfix_domtrans_postdrop(dkim_milter_t)
+postfix_read_config(dkim_milter_t)
+allow dkim_milter_t shell_exec_t:file			exec_file_perms;
+allow dkim_milter_t sendmail_exec_t:file		exec_file_perms;
+allow dkim_milter_t postfix_spool_t:dir		list_dir_perms;
+allow dkim_milter_t postfix_spool_t:file	read_file_perms;
+
+#============= spamd_update_t ==============
+fs_getattr_xattr_fs(spamd_update_t)
+
+#============= spamd_t/spamc_t ==============
+kerberos_read_keytab(spamd_t)
+kerberos_read_keytab(spamc_t)
+
+allow spamd_t	krb5_keytab_t:file	getattr;
+allow spamc_t	krb5_keytab_t:file	getattr;
+
+
+#============= antivirus_t ==============
+logging_read_generic_logs(antivirus_t)
+
+#============= dovecot_t ==============
+fs_read_tmpfs_symlinks(dovecot_t)
+allow dovecot_t postfix_smtp_t:peer recv;
+
+#============= named_t ==============
+allow named_t		mailtasks_t:peer	recv;
+allow mailtasks_t	named_t:peer		recv;
+
+#
+allow postgresql_t	postfix_smtpd_t:peer	recv;
+allow postfix_smtpd_t	postgresql_t:peer	recv;
+
+allow postgresql_t	postfix_cleanup_t:peer	recv;
+allow postfix_cleanup_t	postgresql_t:peer	recv;
+
+#
+allow postfix_cleanup_t krb5_keytab_t:dir	search;
+
+#
+allow sendmail_t	dovecot_var_run_t:fifo_file	write;

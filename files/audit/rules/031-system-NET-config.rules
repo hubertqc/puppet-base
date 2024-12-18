@@ -1,0 +1,8 @@
+#################################################################
+# This file is managed by Puppet                                #
+#################################################################
+
+-w /etc/issue -p wa -k NET_ISSUE
+-w /etc/issue.net -p wa -k NET_ISSUE
+-w /etc/hosts -p wa -k NET_HOSTS
+-w /etc/sysconfig/network -p wa -k NET_CONFIG

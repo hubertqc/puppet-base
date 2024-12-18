@@ -1,0 +1,68 @@
+policy_module(fail2ban-to-PgSQL, 0.4.2)
+  
+gen_require(`
+        attribute       sepgsql_client_type;
+	
+	attribute	sepgsql_database_type;
+	attribute 	sepgsql_schema_type;
+	attribute	sepgsql_table_type;
+	attribute	sepgsql_table_type;
+	attribute	sepgsql_view_type;
+	attribute	sepgsql_procedure_type;
+	attribute	sepgsql_sequence_type;
+
+        type		postgresql_t;
+
+	role		system_r;
+
+        class   	db_database	{ access get_param getattr set_param };
+        class   	db_schema	{ getattr search };
+        class   	db_table 	{ insert lock select update };
+        class   	db_column 	{ insert select update };
+        class   	db_view 	expand;
+        class   	db_procedure 	execute;
+	class		db_sequence	{ create drop get_value getattr next_value relabelfrom relabelto set_value setattr };
+	class		db_tuple	{ delete insert relabelfrom relabelto select update use };
+')
+
+attribute	sepgsql_f2bpg_type;
+
+systemd_domain_template(f2bpg_srv)
+role    system_r        types   f2bpg_srv_t;
+
+typeattribute   f2bpg_srv_t sepgsql_client_type;
+
+corecmd_exec_bin(f2bpg_srv_t)
+corecmd_exec_shell(f2bpg_srv_t)
+corecmd_mmap_bin_files(f2bpg_srv_t)
+corecmd_shell_entry_type(f2bpg_srv_t)
+corenet_tcp_connect_postgresql_port(f2bpg_srv_t)
+
+kerberos_read_keytab(f2bpg_srv_t)
+
+type    f2bpg_db_database_t,	sepgsql_database_type,	sepgsql_f2bpg_type;
+type    f2bpg_db_schema_t, 	sepgsql_schema_type,	sepgsql_f2bpg_type;
+type    f2bpg_db_table_t,	sepgsql_table_type,	sepgsql_f2bpg_type;
+type    f2bpg_db_column_t,	sepgsql_table_type,	sepgsql_f2bpg_type;
+type    f2bpg_db_view_t,	sepgsql_view_type,	sepgsql_f2bpg_type;
+type    f2bpg_db_procedure_t,	sepgsql_procedure_type,	sepgsql_f2bpg_type;
+type    f2bpg_db_sequence_t,	sepgsql_sequence_type,	sepgsql_f2bpg_type;
+
+
+allow f2bpg_srv_t 	sepgsql_f2bpg_type:db_schema		{ getattr search };
+allow f2bpg_srv_t 	sepgsql_f2bpg_type:db_database		{ access get_param getattr set_param };
+allow f2bpg_srv_t 	sepgsql_f2bpg_type:db_table		{ insert lock select update };
+allow f2bpg_srv_t 	sepgsql_f2bpg_type:db_column		{ insert select update };
+allow f2bpg_srv_t 	sepgsql_f2bpg_type:db_tuple		{ insert delete select update use };
+allow f2bpg_srv_t	sepgsql_f2bpg_type:db_view		expand;
+allow f2bpg_srv_t	sepgsql_f2bpg_type:db_procedure		execute;
+allow f2bpg_srv_t	sepgsql_f2bpg_type:db_sequence		{ get_value getattr next_value };
+
+allow	f2bpg_srv_t	self:unix_stream_socket			{ accept };
+
+firewalld_dbus_chat(f2bpg_srv_t)
+
+allow postgresql_t	f2bpg_srv_t:peer	recv;
+allow f2bpg_srv_t	postgresql_t:peer	recv;
+
+permissive f2bpg_srv_t;

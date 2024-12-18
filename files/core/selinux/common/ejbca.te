@@ -1,0 +1,44 @@
+policy_module(ejbca, 0.4.0)
+  
+gen_require(`
+        attribute       sepgsql_client_type;
+	
+	attribute	sepgsql_database_type;
+	attribute 	sepgsql_schema_type;
+	attribute	sepgsql_table_type;
+	attribute	sepgsql_table_type;
+	attribute	sepgsql_view_type;
+	attribute	sepgsql_procedure_type;
+	attribute	sepgsql_sequence_type;
+
+        type    	jboss_t;
+
+        class   	db_database	{ access get_param getattr set_param };
+        class   	db_schema	{ getattr search };
+        class   	db_table 	{ insert lock select update };
+        class   	db_column 	{ insert select update };
+        class   	db_view 	expand;
+        class   	db_procedure 	execute;
+	class		db_sequence	{ create drop get_value getattr next_value relabelfrom relabelto set_value setattr };
+	class		db_tuple	{ delete insert relabelfrom relabelto select update use };
+')
+
+attribute	sepgsql_ejbca_type;
+
+type    ejbca_db_database_t,	sepgsql_database_type,	sepgsql_ejbca_type;
+type    ejbca_db_schema_t, 	sepgsql_schema_type,	sepgsql_ejbca_type;
+type    ejbca_db_table_t,	sepgsql_table_type,	sepgsql_ejbca_type;
+type    ejbca_db_column_t,	sepgsql_table_type,	sepgsql_ejbca_type;
+type    ejbca_db_view_t,	sepgsql_view_type,	sepgsql_ejbca_type;
+type    ejbca_db_procedure_t,	sepgsql_procedure_type,	sepgsql_ejbca_type;
+type    ejbca_db_sequence_t,	sepgsql_sequence_type,	sepgsql_ejbca_type;
+
+typeattribute   jboss_t sepgsql_client_type;
+
+allow jboss_t 	sepgsql_ejbca_type:db_database		{ access get_param getattr set_param };
+allow jboss_t 	sepgsql_ejbca_type:db_table		{ insert lock select update };
+allow jboss_t 	sepgsql_ejbca_type:db_column		{ insert select update };
+allow jboss_t 	sepgsql_ejbca_type:db_tuple		{ insert delete select update use };
+allow jboss_t	sepgsql_ejbca_type:db_view		expand;
+allow jboss_t	sepgsql_ejbca_type:db_procedure		execute;
+allow jboss_t	sepgsql_ejbca_type:db_sequence		{ get_value getattr next_value };

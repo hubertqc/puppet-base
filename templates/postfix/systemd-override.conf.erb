@@ -1,0 +1,9 @@
+[Unit]
+<%- if @location == 'NAS Synology - Paris' -%>
+After = clamav-milter.service spamass-milter.service opendkim.service opendmarc.service saslauthd.service
+<%- else -%>
+Wants = opendkim.service opendmarc.service
+Requires = saslauthd.service spamass-milter.service clamav-milter.service
+
+After = clamav-milter.service spamass-milter.service opendkim.service opendmarc.service saslauthd.service
+<%- end -%>

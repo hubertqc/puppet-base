@@ -1,0 +1,18 @@
+#################################################################
+# This file is managed by Puppet                                #
+#################################################################
+
+# File/directroy deletion
+
+-a always,exit -F arch=b64 -S rename   -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k FILE_DEL
+-a always,exit -F arch=b64 -S renameat -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k FILE_DEL
+-a always,exit -F arch=b64 -S unlink   -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k FILE_DEL
+-a always,exit -F arch=b64 -S unlinkat -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k FILE_DEL
+-a always,exit -F arch=b64 -S rmdir    -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k FILE_DEL
+
+-a always,exit -F arch=b32 -S rename   -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k FILE_DEL_32
+-a always,exit -F arch=b32 -S renameat -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k FILE_DEL_32
+-a always,exit -F arch=b32 -S unlink   -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k FILE_DEL_32
+-a always,exit -F arch=b32 -S unlinkat -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k FILE_DEL_32
+-a always,exit -F arch=b32 -S rmdir    -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k FILE_DEL_32
+

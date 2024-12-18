@@ -1,0 +1,109 @@
+policy_module(pgsql_scripts, 0.5.4)
+
+gen_require(`
+	attribute	unconfined_domain_type;
+	attribute	sepgsql_admin_type;
+	attribute	cron_job_domain;
+
+	type		postgresql_log_t;
+	type		system_cronjob_t;
+	type		sshd_t;
+	type		var_log_t;
+
+	type		named_t;
+
+	type		dbadm_t;
+	type		sysadm_t;
+
+	role		system_r;
+	role		staff_r;
+	role		dbadm_r;
+')
+
+userdom_restricted_user_template(postgresql_dbadm_job)
+typeattribute	postgresql_dbadm_job_t 	sepgsql_admin_type;
+typeattribute	postgresql_dbadm_job_t 	cron_job_domain;
+
+type	postgresql_dbadm_script_t;
+files_type(postgresql_dbadm_script_t)
+
+type	postgresql_backup_t;
+files_type(postgresql_backup_t)
+
+role	system_r	types	postgresql_dbadm_job_t;
+
+role	postgresql_dbadm_job_r;
+role	postgresql_dbadm_job_r	types	postgresql_dbadm_job_t;
+
+typeattribute	dbadm_t 	sepgsql_admin_type;
+typeattribute	dbadm_t 	login_userdomain;
+
+##############################################
+
+corenet_out_generic_if(postgresql_dbadm_job_t)
+corenet_out_generic_node(postgresql_dbadm_job_t)
+corenet_in_generic_if(postgresql_dbadm_job_t)
+corenet_in_generic_node(postgresql_dbadm_job_t)
+corenet_tcp_bind_generic_node(postgresql_dbadm_job_t)
+corenet_tcp_bind_generic_port(postgresql_dbadm_job_t)
+corenet_tcp_connect_ssh_port(postgresql_dbadm_job_t)
+
+corecmd_exec_bin(postgresql_dbadm_job_t)
+corecmd_mmap_bin_files(postgresql_dbadm_job_t)
+
+fs_exec_hugetlbfs_files(postgresql_dbadm_job_t)
+fs_read_cgroup_files(postgresql_dbadm_job_t)
+fs_search_cgroup_dirs(postgresql_dbadm_job_t)
+miscfiles_read_generic_certs(postgresql_dbadm_job_t)
+
+sysnet_read_config(postgresql_dbadm_job_t)
+kerberos_read_keytab(postgresql_dbadm_job_t)
+
+sssd_read_public_files(postgresql_dbadm_job_t)
+sssd_search_lib(postgresql_dbadm_job_t)
+
+
+allow	postgresql_dbadm_job_t	var_log_t:dir		search_dir_perms;
+allow	postgresql_dbadm_job_t	var_log_t:lnk_file	read_lnk_file_perms;
+
+##############################################
+
+postgresql_tcp_connect(postgresql_dbadm_job_t)
+postgresql_manage_db(postgresql_dbadm_job_t)
+postgresql_search_db(postgresql_dbadm_job_t)
+postgresql_stream_connect(postgresql_dbadm_job_t)
+
+allow	postgresql_dbadm_job_t	postgresql_dbadm_script_t:file	{ entrypoint getattr ioctl open read };
+
+allow	postgresql_dbadm_job_t	postgresql_log_t:file		{ create_file_perms  write_file_perms };
+
+domtrans_pattern(system_cronjob_t, postgresql_dbadm_script_t, postgresql_dbadm_job_t)
+
+
+allow	system_cronjob_t	postgresql_dbadm_script_t:dir	search_dir_perms;
+allow	system_cronjob_t	postgresql_dbadm_script_t:file	exec_file_perms;
+
+
+allow	sshd_t			postgresql_dbadm_job_t:peer	recv;
+allow	postgresql_dbadm_job_t	sshd_t:peer			recv;
+
+allow	named_t			postgresql_dbadm_job_t:peer	recv;
+allow	postgresql_dbadm_job_t	named_t:peer			recv;
+
+allow	sshd_t			sepgsql_admin_type:process	dyntransition;
+
+allow	sepgsql_admin_type	postgresql_backup_t:dir		rw_dir_perms;
+allow	sepgsql_admin_type	postgresql_backup_t:file	manage_file_perms;
+
+allow	sysadm_t		postgresql_backup_t:dir		manage_dir_perms;
+allow	sysadm_t		postgresql_backup_t:file	manage_file_perms;
+
+filetrans_add_pattern(sepgsql_admin_type,	postgresql_backup_t,	postgresql_backup_t,	{ dir file lnk_file fifo_file sock_file })
+filetrans_add_pattern(unconfined_domain_type,	postgresql_backup_t,	postgresql_backup_t,	{ dir file lnk_file fifo_file sock_file })
+filetrans_add_pattern(sysadm_t,			postgresql_backup_t,	postgresql_backup_t,	{ dir file lnk_file fifo_file sock_file })
+
+
+#####################################
+
+user	dbadm_u	roles	{ staff_r dbadm_r postgresql_dbadm_job_r }	level s0	range	s0 - s0:c0.c1023;
+user	dbjob_u	roles	{ postgresql_dbadm_job_r }		level s0	range	s0 - s0:c0.c1023;

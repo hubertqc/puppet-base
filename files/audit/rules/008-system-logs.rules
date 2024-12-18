@@ -1,0 +1,9 @@
+#################################################################
+# This file is managed by Puppet                                #
+#################################################################
+
+#Log files
+-a always,exit -F path=/var/log/messages -F perm=wa -F subj_type=unconfined_t -F key=LOG_ALTERED
+-a always,exit -F path=/var/log/dmesg    -F perm=wa -F subj_type=unconfined_t -F key=LOG_ALTERED
+-a always,exit -F path=/var/log/secure   -F perm=wa -F subj_type=unconfined_t -F key=LOG_ALTERED
+

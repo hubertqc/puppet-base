@@ -1,0 +1,8 @@
+/opt/mailtasks/dovecot/imapsieve(/.*)?			gen_context(system_u:object_r:imapsieve_script_t,s0)
+/opt/mailtasks/dovecot/imapsieve/.*\.(sh|rb|py)	--	gen_context(system_u:object_r:imapsieve_exec_t,s0)
+/opt/mailtasks/dovecot/sieve-pipe(/.*)?			gen_context(system_u:object_r:imapsieve_tmp_t,s0)
+#
+#/var/spool/mail/.*/dovecot-[^/]+		--	gen_context(system_u:object_r:mail_spool_dovecot_attr_t,s0)
+#/var/spool/mail/.*/dovecot\.index		--	gen_context(system_u:object_r:mail_spool_dovecot_index_t,s0)
+#/var/spool/mail/.*/dovecot\.index\.cache	--	gen_context(system_u:object_r:mail_spool_dovecot_index_t,s0)
+#/var/spool/mail/.*/dovecot\.index\.log.*	--	gen_context(system_u:object_r:mail_spool_dovecot_log_t,s0)

@@ -1,0 +1,11 @@
+#################################################################
+# This file is managed by Puppet                                #
+#################################################################
+
+# Session records
+
+-w /var/log/lastlog -p wa -k MISC_session
+
+-w /var/run/utmp -p wa -k MISC_session
+-w /var/log/btmp -p wa -k MISC_session
+-w /var/log/wtmp -p wa -k MISC_session

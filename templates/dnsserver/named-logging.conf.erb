@@ -1,0 +1,153 @@
+#####################################################################
+#
+#		 Log configuration
+#
+#####################################################################
+logging
+{
+	channel default_channel
+	{
+		file 		"/var/log/named/default.log" versions 3 size 32k ;
+		severity 	info;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+
+	channel general_channel
+	{
+		file 		"/var/log/named/general.log" versions 3 size 32k ;
+		severity 	info;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+
+	channel syslog_daemon_channel
+	{
+		syslog		daemon;
+		severity 	notice;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+
+	channel syslog_authpriv_channel
+	{
+		syslog		authpriv;
+		severity 	notice;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+
+	channel config_channel
+	{
+		file 		"/var/log/named/config.log" versions 3 size 32k ;
+		severity 	info;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+
+	channel update_channel
+	{
+		file 		"/var/log/named/update.log" versions 3 size 32k ;
+		severity 	info;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+
+	channel xfers_channel
+	{
+		file 		"/var/log/named/xfers.log" versions 3 size 32k ;
+		severity 	debug;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+
+	channel security_channel
+	{
+		file 		"/var/log/named/security.log" versions 3 size 32k ;
+		severity 	info;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+
+	channel consist_channel
+	{
+		file 		"/var/log/named/consist.log" versions 3 size 32k ;
+		severity 	info;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+
+	channel lame_channel
+	{
+		file 		"/var/log/named/lame.log" versions 3 size 32k ;
+		severity 	info;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+
+	channel network_channel
+	{
+		file 		"/var/log/named/network.log" versions 3 size 32k ;
+		severity 	info;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+
+	channel notify_channel
+	{
+		file 		"/var/log/named/notify.log" versions 3 size 32k ;
+		severity 	debug;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+
+	channel debug_channel
+	{
+		file 		"/var/log/named/debug.log" versions 3 size 128k ;
+		severity 	dynamic;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+
+	channel debug_qry_channel
+	{
+		file 		"/var/log/named/query.log" versions 3 size 128k ;
+		severity 	dynamic;
+		print-category	yes;
+		print-severity	yes;
+		print-time	yes;
+	};
+
+	category config		{ config_channel; debug_channel; };
+
+	category database	{ consist_channel; debug_channel; };
+	category lame-servers	{ lame_channel; debug_channel; };
+	category xfer-in	{ xfers_channel; };
+	category xfer-out	{ xfers_channel; };
+	category update		{ update_channel; };
+
+	category dnssec		{ security_channel; };
+	category security	{ security_channel; syslog_authpriv_channel; };
+
+	category notify		{ notify_channel; };
+	category network	{ network_channel; };
+
+	category default	{ default_channel; debug_channel; };
+	category general	{ general_channel; debug_channel; };
+
+	#category queries	{ debug_qry_channel; };
+	#category client	{ debug_qry_channel; };
+};

@@ -1,0 +1,1 @@
+/opt/scripts/fail2ban-to-PgSQL-srv.rb			--	gen_context(system_u:object_r:f2bpg_srv_exec_t,s0)

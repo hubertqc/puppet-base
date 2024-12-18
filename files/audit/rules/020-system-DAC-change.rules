@@ -1,0 +1,65 @@
+#################################################################
+# This file is managed by Puppet                                #
+#################################################################
+
+# DAC chown
+
+-a always,exit -F arch=b64 -S chown  -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_CHOWN
+-a always,exit -F arch=b64 -S lchown -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_CHOWN
+-a always,exit -F arch=b64 -S fchown -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_CHOWN
+
+-a always,exit -F arch=b32 -S chown  -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_CHOWN_32
+-a always,exit -F arch=b32 -S lchown -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_CHOWN_32
+-a always,exit -F arch=b32 -S fchown -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_CHOWN_32
+
+-a always,exit -F arch=b64 -S fchownat -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_CHOWN
+-a always,exit -F arch=b32 -S fchownat -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_CHOWN_32
+
+# DAC chmod
+ -a always,exit -F arch=b64 -S chmod  -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_CHMOD
+ -a always,exit -F arch=b64 -S fchmod -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_CHMOD
+
+ -a always,exit -F arch=b32 -S chmod  -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_CHMOD_32
+ -a always,exit -F arch=b32 -S fchmod -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_CHMOD_32
+
+ -a always,exit -F arch=b64 -S fchmodat -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_CHMOD
+ -a always,exit -F arch=b32 -S fchmodat -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_CHMOD_32
+
+# DAC Extended attributes
+
+-a always,exit -F arch=b64 -S setxattr  -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_XATTR
+-a always,exit -F arch=b64 -S lsetxattr -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_XATTR
+-a always,exit -F arch=b64 -S fsetxattr -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_XATTR
+
+-a always,exit -F arch=b64 -S setxattr  -F auid=0 -F subj_type=unconfined_t -k DAC_XATTR
+-a always,exit -F arch=b64 -S lsetxattr -F auid=0 -F subj_type=unconfined_t -k DAC_XATTR
+-a always,exit -F arch=b64 -S fsetxattr -F auid=0 -F subj_type=unconfined_t -k DAC_XATTR
+
+-a always,exit -F arch=b64 -S removexattr  -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_XATTR
+-a always,exit -F arch=b64 -S lremovexattr -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_XATTR
+-a always,exit -F arch=b64 -S fremovexattr -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_XATTR
+
+-a always,exit -F arch=b64 -S removexattr  -F auid=0 -F subj_type=unconfined_t -k DAC_XATTR
+-a always,exit -F arch=b64 -S lremovexattr -F auid=0 -F subj_type=unconfined_t -k DAC_XATTR
+-a always,exit -F arch=b64 -S fremovexattr -F auid=0 -F subj_type=unconfined_t -k DAC_XATTR
+
+-a always,exit -F arch=b32 -S setxattr  -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_XATTR_32
+-a always,exit -F arch=b32 -S lsetxattr -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_XATTR_32
+-a always,exit -F arch=b32 -S fsetxattr -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_XATTR_32
+
+-a always,exit -F arch=b32 -S setxattr  -F auid=0 -F subj_type=unconfined_t -k DAC_XATTR_32
+-a always,exit -F arch=b32 -S lsetxattr -F auid=0 -F subj_type=unconfined_t -k DAC_XATTR_32
+-a always,exit -F arch=b32 -S fsetxattr -F auid=0 -F subj_type=unconfined_t -k DAC_XATTR_32
+
+-a always,exit -F arch=b32 -S removexattr  -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_XATTR_32
+-a always,exit -F arch=b32 -S lremovexattr -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_XATTR_32
+-a always,exit -F arch=b32 -S fremovexattr -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_XATTR_32
+
+-a always,exit -F arch=b32 -S removexattr  -F auid=0 -F subj_type=unconfined_t -k DAC_XATTR_32
+-a always,exit -F arch=b32 -S lremovexattr -F auid=0 -F subj_type=unconfined_t -k DAC_XATTR_32
+-a always,exit -F arch=b32 -S fremovexattr -F auid=0 -F subj_type=unconfined_t -k DAC_XATTR_32
+
+# Umount
+
+-a always,exit -F arch=b64 -S umount2 -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_UMOUNT
+-a always,exit -F arch=b32 -S umount2 -F auid>=1000 -F auid!=unset -F subj_type=unconfined_t -k DAC_UMOUNT_32

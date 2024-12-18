@@ -1,0 +1,28 @@
+#################################################################
+# This file is managed by Puppet                                #
+#################################################################
+
+#System settings changes
+-a always,exit -F dir=/proc/sys/fs      -F perm=w -k KERNEL_SETTING_FS
+-a always,exit -F dir=/proc/sys/kernel  -F perm=w -k KERNEL_SETTING_KERNEL
+-a always,exit -F dir=/proc/sys/net     -F perm=w -k KERNEL_SETTING_NET
+
+#Files change
+-a always,exit -F dir=/etc/init.d -F subj_type=unconfined_t -F perm=wa -k INIT_CHANGED
+-a always,exit -F dir=/etc/rc.d   -F subj_type=unconfined_t -F perm=wa -k INIT_CHANGED
+
+-a always,exit -F dir=/boot   -F subj_type=unconfined_t -F perm=wa -k SYSTEM_FILE_CHANGED
+-a always,exit -F dir=/root   -F subj_type=unconfined_t -F perm=wa -k SYSTEM_FILE_CHANGED
+-a always,exit -F dir=/etc    -F subj_type=unconfined_t -F perm=wa -k SYSTEM_FILE_CHANGED
+-a always,exit -F dir=/bin    -F subj_type=unconfined_t -F perm=wa -k SYSTEM_FILE_CHANGED
+-a always,exit -F dir=/sbin   -F subj_type=unconfined_t -F perm=wa -k SYSTEM_FILE_CHANGED
+-a always,exit -F dir=/lib    -F subj_type=unconfined_t -F perm=wa -k SYSTEM_FILE_CHANGED
+-a always,exit -F dir=/lib64  -F subj_type=unconfined_t -F perm=wa -k SYSTEM_FILE_CHANGED
+-a always,exit -F dir=/usr    -F subj_type=unconfined_t -F perm=wa -k SYSTEM_FILE_CHANGED
+-a always,exit -F dir=/sys    -F subj_type=unconfined_t -F perm=wa -k SYSTEM_FILE_CHANGED
+
+-a always,exit -F dir=/var/spool/at       -F subj_type=unconfined_t -F perm=wa -k SYSTEM_FILE_CHANGED
+-a always,exit -F dir=/var/db/sudo        -F subj_type=unconfined_t -F perm=wa -k SYSTEM_FILE_CHANGED
+-a always,exit -F dir=/var/spool/cron     -F subj_type=unconfined_t -F perm=wa -k SYSTEM_FILE_CHANGED
+-a always,exit -F dir=/var/spool/anacron  -F subj_type=unconfined_t -F perm=wa -k SYSTEM_FILE_CHANGED
+

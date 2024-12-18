@@ -1,0 +1,92 @@
+#
+# Initial security label for SE-PostgreSQL (MCS)
+#
+
+# <databases>
+db_database	*			system_u:object_r:sepgsql_db_t:s0
+
+# <schemas>
+db_schema	*.*			system_u:object_r:sepgsql_schema_t:s0
+
+# <tables>
+db_table	*.pg_catalog.*		system_u:object_r:sepgsql_sysobj_t:s0
+db_table	*.*.*			system_u:object_r:sepgsql_table_t:s0
+
+# <column>
+db_column	*.pg_catalog.*.*	system_u:object_r:sepgsql_sysobj_t:s0
+db_column	*.*.*.*			system_u:object_r:sepgsql_table_t:s0
+
+# <sequences>
+db_sequence	*.*.*			system_u:object_r:sepgsql_seq_t:s0
+
+# <views>
+db_view		*.*.*			system_u:object_r:sepgsql_view_t:s0
+
+# <procedures>
+db_procedure	*.*.*			system_u:object_r:sepgsql_proc_exec_t:s0
+
+# <tuples>
+db_tuple	*.pg_catalog.*		system_u:object_r:sepgsql_sysobj_t:s0
+db_tuple	*.*.*			system_u:object_r:sepgsql_table_t:s0
+
+# <blobs>
+db_blob		*.*			system_u:object_r:sepgsql_blob_t:s0
+
+# <language>
+db_language	*.sql			system_u:object_r:sepgsql_safe_lang_t:s0
+db_language	*.plpgsql		system_u:object_r:sepgsql_safe_lang_t:s0
+db_language	*.pltcl			system_u:object_r:sepgsql_safe_lang_t:s0
+db_language	*.plperl		system_u:object_r:sepgsql_safe_lang_t:s0
+db_language	*.*			system_u:object_r:sepgsql_lang_t:s0
+
+#
+## EJBCA
+#
+db_database	ejbca			system_u:object_r:ejbca_db_database_t:s0
+db_schema	ejbca.*			system_u:object_r:ejbca_db_schema_t:s0
+db_table	ejbca.*.*		system_u:object_r:ejbca_db_table_t:s0
+db_column	ejbca.*.*.*		system_u:object_r:ejbca_db_table_t:s0
+db_view		ejbca.*.*		system_u:object_r:ejbca_db_view_t:s0
+db_procedure	ejbca.*.*		system_u:object_r:ejbca_db_procedure_t:s0
+db_sequence	ejbca.*.*		system_u:object_r:ejbca_db_sequense_t:s0
+db_tuple	ejbca.*.*		system_u:object_r:ejbca_db_table_t:s0
+
+#
+## SpamAssassin
+#
+db_database	spamassassin			system_u:object_r:spamassassin_db_database_t:s0
+db_schema	spamassassin.*			system_u:object_r:spamassassin_db_schema_t:s0
+db_procedure	spamassassin.*.*		system_u:object_r:spamassassin_db_procedure_t:s0
+db_sequence	spamassassin.*.*		system_u:object_r:spamassassin_db_sequense_t:s0
+#
+db_table	spamassassin.*.bayes*		system_u:object_r:spamassassin_bayes_db_table_t:s0
+db_column	spamassassin.*.bayes*.*		system_u:object_r:spamassassin_bayes_db_table_t:s0
+db_view		spamassassin.*.bayes*		system_u:object_r:spamassassin_bayes_db_view_t:s0
+db_tuple	spamassassin.*.bayes*		system_u:object_r:spamassassin_bayes_db_table_t:s0
+#
+db_table	spamassassin.*.userprefs*	system_u:object_r:spamassassin_userprefs_db_table_t:s0
+db_column	spamassassin.*.userprefs*.*	system_u:object_r:spamassassin_userprefs_db_table_t:s0
+db_view		spamassassin.*.userprefs*	system_u:object_r:spamassassin_userprefs_db_view_t:s0
+db_tuple	spamassassin.*.userprefs*	system_u:object_r:spamassassin_userprefs_db_table_t:s0
+
+#
+## Fail2ban-to-PostgresSQL
+#
+db_database	fail2ban_db		system_u:object_r:f2bpg_db_database_t:s0
+db_schema	fail2ban_db.*		system_u:object_r:f2bpg_db_schema_t:s0
+db_procedure	fail2ban_db.*.*		system_u:object_r:f2bpg_db_procedure_t:s0
+db_sequence	fail2ban_db.*.*		system_u:object_r:f2bpg_db_sequense_t:s0
+#
+db_table	fail2ban_db.*.f2b_banned*	system_u:object_r:f2bpg_bayes_db_table_t:s0
+db_column	fail2ban_db.*.f2b_banned*.*	system_u:object_r:f2bpg_bayes_db_table_t:s0
+db_view		fail2ban_db.*.f2b_banned*	system_u:object_r:f2bpg_bayes_db_view_t:s0
+db_tuple	fail2ban_db.*.f2b_banned*	system_u:object_r:f2bpg_bayes_db_table_t:s0
+
+#
+## Foreman
+#
+db_database	foreman			system_u:object_r:foreman_db_t:s0
+db_schema	foreman.*		system_u:object_r:foreman_db_t:s0
+db_table	foreman.*.*		system_u:object_r:foreman_db_t:s0
+db_view		foreman.*.*		system_u:object_r:foreman_db_t:s0
+

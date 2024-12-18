@@ -1,0 +1,63 @@
+#!/bin/bash
+
+RC=0
+
+DATA_root=/var/named/chroot/var/named/data
+
+#for zone in lurenzu.corsica lurenzu.org public.lurenzu.org mimet.info whale-queens.org colombani.name quarantel.name
+for zone in lurenzu.corsica lurenzu.org mimet.info whale-queens.org colombani.name quarantel.name
+do
+
+	for view in public private
+	do
+		if [ -f ${DATA_root}/${view}/unsigned/db.${zone} ]
+		then
+			cat <<EOT
+-------------------------------------------
+
+Signing zone '${zone}' in view '${view}'
+
+
+EOT
+
+			dnssec-signzone -p -t -g -n 2 -K /etc/named/keys/ -f ${DATA_root}/${view}/unsigned/db.${zone}.signed -N date -o ${zone} -A -3 $( sha256sum /var/log/messages | cut -b 1-16 ) -T 86400 ${DATA_root}/${view}/unsigned/db.${zone}
+			rc=$?
+
+			RC=$(( $RC + $rc ))
+
+			if [ $rc -eq 0 ]
+			then
+				cat <<EOT
+
+Zone '${zone}' in view '${view}' successfully signed, switching files
+EOT
+				cat ${DATA_root}/${view}/db.${zone} > ${DATA_root}/${view}/db.${zone}.previous
+				cat ${DATA_root}/${view}/unsigned/db.${zone}.signed > ${DATA_root}/${view}/db.${zone}
+				rndc -k /etc/named/keys/rndc.key reload ${zone} in ${view}
+			fi
+		fi
+	done
+done
+
+for zone in public.lurenzu.org
+do
+
+	for view in public private
+	do
+		if [ -f ${DATA_root}/${view}/unsigned/db.${zone} ]
+		then
+			cat <<EOT
+-------------------------------------------
+
+Refreshing zone '${zone}' in view '${view}'
+
+
+EOT
+			cat ${DATA_root}/${view}/unsigned/db.${zone} > ${DATA_root}/${view}/db.${zone}
+			rndc -k /etc/named/keys/rndc.key reload ${zone} in ${view}
+		fi
+	done
+done
+
+exit $RC
+

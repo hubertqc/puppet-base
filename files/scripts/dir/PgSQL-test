@@ -1,0 +1,6 @@
+#!/bin/bash
+
+psql -x -c "select * from pg_stat_wal_receiver" > /var/log/pgsql/WAL-receiver-stat
+psql -x -c "select * from pg_stat_replication"  > /var/log/pgsql/Replication-stat
+
+exit 0

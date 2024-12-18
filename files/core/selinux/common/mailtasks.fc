@@ -1,0 +1,7 @@
+/run/mailtasks(/.*)?					gen_context(system_u:object_r:mailtasks_run_t,s0)
+/var/tmp/mailtasks(/.*)?				gen_context(system_u:object_r:mailtasks_tmp_t,s0)
+/var/lock/MailTasks(/.*)?				gen_context(system_u:object_r:mailtasks_lock_t,s0)
+/var/log/MailTasks(/.*)?				gen_context(system_u:object_r:mailtasks_log_t,s0)
+/opt/mailtasks/[^/]*\.(sh|rb|py)		--	gen_context(system_u:object_r:mailtasks_exec_t,s0)
+#
+/var/spool/mail/.*/.spamassassin(/.*)?			gen_context(system_u:object_r:mail_spam_userpref_t,s0)

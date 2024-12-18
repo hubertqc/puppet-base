@@ -1,0 +1,13 @@
+[Unit]
+Description=Fail2Ban PostgreSQL centralisation service
+
+BindsTo = firewalld.service
+After = firewalld.service
+ReloadPropagatedFrom = firewalld.service
+
+[Service]
+Nice=10
+ExecStart=/opt/scripts/fail2ban-to-PgSQL-srv.rb
+
+[Install]
+WantedBy = multi-user.target

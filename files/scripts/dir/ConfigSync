@@ -1,0 +1,66 @@
+#!/bin/bash
+RC=0
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+where_am_i=$( hostname -s )
+
+#
+## When on Gaia
+#
+
+#if [ "${where_am_i}" = "gaia" ]
+if [ "${where_am_i}" = "nowhere" ]
+then
+	for server in ouranos chaos promethee
+	do
+		rc=0
+		for D in /etc/named/ /var/named/chroot/var/named/data/
+		do
+			rsync -a --delete $D ${server}:$D
+			rc=$?
+
+			RC=$(( $RC + $rc ))
+
+		done
+	done
+fi
+
+#
+## When on Ouranos
+#
+
+if [ "${where_am_i}" = "ouranos" ]
+then
+	for server in gaia chaos promethee
+	do
+		rc=0
+		for D in /etc/letsencrypt/ /etc/dovecot/sieve/ /var/spool/mail/virtual/ /etc/selinux/targeted/logins/ /etc/selinux/targeted/contexts/users/
+		do
+			rsync -a --delete $D ${server}:$D
+			rc=$?
+
+			RC=$(( $RC + $rc ))
+
+		done
+		tar -c --selinux -P -f - \
+			/lib/systemd/system/openvpn.target \
+			/etc/systemd/system/openvpn-*.service.d \
+			/etc/systemd/system/clam*.service.d \
+			/etc/systemd/system/postfix.service.d \
+			/etc/systemd/system/spam*.service.d \
+			/etc/sysconfig/certbot \
+			/etc/sysconfig/slapd /usr/lib/systemd/system/slapd.service /etc/systemd/system/slapd.service.d \
+			/etc/systemd/system/dovecot.service.d \
+			/etc/dovecot/dovecot.synclist /etc/dovecot/dovecot-ldap.conf.ext /etc/dovecot/libexttextcat-fpdb.conf \
+			/var/spool/mail/*/*/.dovecot.s* \
+			/etc/selinux/targeted/contexts/sepgsql_contexts \
+			/etc/rsyslog.d \
+			| ssh ${server} '/usr/bin/tar -x --selinux -P -f -'
+		rc=$?
+
+		RC=$(( $RC + $rc ))
+	done
+fi
+
+exit $RC

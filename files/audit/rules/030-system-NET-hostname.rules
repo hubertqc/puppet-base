@@ -1,0 +1,8 @@
+#################################################################
+# This file is managed by Puppet                                #
+#################################################################
+
+# Hostname changes
+-a always,exit -F arch=b64 -S sethostname,setdomainname -F key=NET_HOSTNAME_CHANGED
+-a always,exit -F arch=b32 -S sethostname,setdomainname -F key=NET_HOSTNAME_CHANGED_32
+

@@ -1,0 +1,43 @@
+service replicator {
+  process_min_avail = 1
+
+  unix_listener replicator-doveadm {
+    mode = 0600
+    user = mail
+  }
+}
+
+service aggregator {
+  fifo_listener replication-notify-fifo {
+    user = mail
+  }
+  unix_listener replication-notify {
+    user = mail
+  }
+}
+
+service doveadm {
+  inet_listener {
+    port = <%= @replication_port %>
+<%- if @replication_ssl -%>
+    ssl = yes
+<%- else -%>
+    ssl = no
+<%- end -%>
+  }
+}
+
+replication_max_conns = 10
+replication_dsync_parameters = -d -N -l 30 -T 900 -x virtual.* -U
+
+doveadm_port = <%= @replication_port %>
+doveadm_password = <%= @replication_password %>
+
+plugin {
+<%- if @replication_ssl -%>
+  mail_replica = tcps:<%= @replication_host %>:<%= @replication_port %>
+<%- else -%>
+  mail_replica = tcp:<%= @replication_host %>:<%= @replication_port %>
+<%- end -%>
+  replication_full_sync_interval = 4 hours
+}

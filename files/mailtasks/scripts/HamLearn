@@ -1,0 +1,146 @@
+#!/bin/bash
+
+# Script, which allows per-user bayes db's for a dovecot virtual user
+# setup. sa-learn parses a set amount of folders (.Junk.Spam and .Junk.Ham) for
+# Ham/Spam and adds it to the per-user db.
+
+exit 0
+
+ 
+if [ -r $( dirname $0 )/MailTasksCONFIG ] 
+then
+	. $( dirname $0 )/MailTasksCONFIG
+else
+	echo "Unable to read $( dirname $0 )/MailTasksCONFIG"
+	exit 127
+fi
+
+if [ $( id -u ) -eq 0 ]
+then
+	echo "Cannot be run as root."
+	exit 27
+fi
+
+if [ -f ${LOCK} ]
+then
+	echo "Lock file found."
+	exit 27
+fi
+
+touch ${LOCK}
+
+
+RC=0
+ 
+TTY=$( tty )
+
+MAIL_DIR_LIST="$MAIL_DIR/*" 
+AZ="abcdefghijklmnopqrstuvwxyz"
+
+if [ $# -eq 1 -a -d "$MAIL_DIR/$1" ]
+then
+	MAIL_DIR_LIST="$MAIL_DIR/$1" 
+fi
+
+# get all mail accounts
+for domain in $MAIL_DIR_LIST
+do
+	if [ -d ${domain} ]
+	then
+		echo
+		echo
+		echo '---------------------------------------------------------'
+		echo 
+		echo " Processing domain ${domain}"
+		echo 
+
+		for user in $MAIL_DIR/${domain##*/}/*
+		do
+			mailaccount=${user##*/}
+			dbpath="${SPAMASS_DIR}/${domain##*/}/${mailaccount}"
+			hamfolder="${domain}/${mailaccount}/Maildir/.${HAM_FOLDER}"
+	 
+			[ ! -d "${dbpath}" ] && sudo /opt/mailtasks/createUserSpamDB "${dbpath}"
+
+			untouched=0
+
+			if [ -d $hamfolder ] ; then
+				nb=$( find $hamfolder/cur $hamfolder/new -type f 2>/dev/null | wc -l )
+				if [ $nb -gt 0 ]
+				then
+					echo "Learning Ham from ${hamfolder} for user ${mailaccount}"
+					sudo -u sa-milt sa-learn --forget --dbpath "${dbpath}/bayes" "${hamfolder}/cur/"
+					sudo -u sa-milt sa-learn --forget -u ${mailaccount} "${hamfolder}/cur/"
+					RC=$(( $RC + $? ))
+					sudo -u sa-milt sa-learn --ham --dbpath "${dbpath}/bayes" --no-sync "${hamfolder}/cur/"
+					sudo -u sa-milt sa-learn --ham -u ${mailaccount} "${hamfolder}/cur/"
+					RC=$(( $RC + $? ))
+
+					if [ $RC -eq 0 ]
+					then
+						sudo -u mail doveadm flags remove -u ${mailaccount}@$(basename ${domain}) '$Junk' mailbox "${HAM_FOLDER}" all
+						sudo -u mail doveadm flags remove -u ${mailaccount}@$(basename ${domain}) 'Junk' mailbox "${HAM_FOLDER}" all
+
+						if [ "${MASTER_SERVER}" = $( hostname -s ) ]
+						then
+							echo "Moving messages back to INBOX"
+							sudo -u mail doveadm move -u ${mailaccount}@$(basename ${domain}) INBOX mailbox "${HAM_FOLDER}" all
+							RC=$(( $RC + $? ))
+						fi
+					fi
+
+					untouched=1
+				fi
+			fi
+
+			if [ -f "${inbox}/dovecot-keywords" ]
+			then
+				filelist=/var/tmp/mailtasks/$(basename $0).$$
+
+				JunkRecorded_idx=$( awk '($2 ~ "^JunkRecorded$") {print $1}'  "${inbox}/dovecot-keywords" )
+				JunkRecorded_flag=${AZ:$JunkRecorded_idx:1}
+				[ -n "${JunkRecorded_flag}" ] || JunkRecorded_flag="ZZZZZ"
+
+				NotJunk_idx=$( awk '($2 ~ "^NotJunk$") {print $1}'  "${inbox}/dovecot-keywords" )
+				NotJunk_flag=${AZ:$NotJunk_idx:1}
+				[ -n "${NotJunk_flag}" ] || NotJunk_flag="ZZZZZ"
+
+				NonJunk_idx=$( awk '($2 ~ "^NonJunk$") {print $1}'  "${inbox}/dovecot-keywords" )
+				NonJunk_flag=${AZ:$NonJunk_idx:1}
+				[ -n "${NonJunk_flag}" ] || NonJunk_flag="ZZZZZ"
+
+				find "${inbox}/cur" -type f -i mtime -1 -a \( \( -name "*:2,*${JunkRecorded_flag}*" -a -name "*:2,*${NotJunk_flag}*" \) -o -name "*:2,*${NonJunk_flag}*" \) | sort -u > ${filelist}
+				
+				if [ -s ${filelist} ]
+				then
+					echo "Learning Ham from INBOX for user ${mailaccount}"
+					sudo -u sa-milt sa-learn --forget --dbpath "${dbpath}/bayes" --folders=${filelist}
+					sudo -u sa-milt sa-learn --forget -u ${mailaccount} --folders=${filelist}
+					RC=$(( $RC + $? ))
+					sudo -u sa-milt sa-learn --ham --dbpath "${dbpath}/bayes" --no-sync --folders=${filelist}
+					sudo -u sa-milt sa-learn --ham -u ${mailaccount} --folders=${filelist}
+					RC=$(( $RC + $? ))
+
+					untouched=1
+				fi
+			fi
+
+			if [ $untouched -ne 0 ] ; then
+				sudo -u sa-milt sa-learn --sync --dbpath "${dbpath}"
+				RC=$(( $RC + $? ))
+	 
+				# Fix dbpath permissions
+				#chmod 2700 ${dbpath}
+			fi
+		done
+	fi
+
+done > ${LOGFILE} 2>&1
+
+echo "RC: $RC" >> ${LOGFILE}
+[ $RC -ne 0 ] && cat ${LOGFILE}
+
+
+rm -f ${LOCK}
+
+exit $RC

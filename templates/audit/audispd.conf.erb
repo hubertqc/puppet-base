@@ -1,0 +1,15 @@
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !! THIS FILE IS MANAGED BY PUPPET !!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+# This file controls the configuration of the audit event 
+# dispatcher daemon, audispd.
+#
+
+q_depth = <%= @q_depth %>
+overflow_action = SYSLOG
+priority_boost = 4
+max_restarts = 10
+name_format = HOSTNAME
+#name = mydomain
+

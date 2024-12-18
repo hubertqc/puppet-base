@@ -1,0 +1,31 @@
+/opt/jboss(/.*)?			  		gen_context(system_u:object_r:jboss_file_t,s0)
+
+/opt/jboss/.*\.properties			--	gen_context(system_u:object_r:jboss_conf_t,s0)
+/opt/jboss/.*\.conf				--	gen_context(system_u:object_r:jboss_conf_t,s0)
+/opt/jboss/.*\.xml				--	gen_context(system_u:object_r:jboss_conf_t,s0)
+
+/opt/jboss/.*/(appclient|domain|standalone)/configuration(/.*)?				gen_context(system_u:object_r:jboss_conf_t,s0)
+/opt/jboss/.*/(appclient|domain|standalone)/configuration/.*_xml_history(/.*)?		gen_context(system_u:object_r:jboss_dynconf_t,s0)
+/opt/jboss/.*/(appclient|domain|standalone)/configuration/logging.properties	--	gen_context(system_u:object_r:jboss_dynconf_t,s0)
+
+/opt/jboss/as/bin(/.*)?			  		gen_context(system_u:object_r:jboss_bin_t,s0)
+/opt/jboss/jboss-[^/]+/bin(/.*)?	  		gen_context(system_u:object_r:jboss_bin_t,s0)
+
+/opt/jboss/.*/lib(/.*)?			  		gen_context(system_u:object_r:jboss_lib_t,s0)
+/opt/jboss/.*/modules(/.*)?		  		gen_context(system_u:object_r:jboss_lib_t,s0)
+
+/opt/jboss/as/modules(/.*)?			  	gen_context(system_u:object_r:jboss_lib_t,s0)
+/opt/jboss/jboss-[^/]+/modules(/.*)?	  		gen_context(system_u:object_r:jboss_lib_t,s0)
+
+/opt/jboss/.*\.jar				--	gen_context(system_u:object_r:jboss_lib_t,s0)
+/opt/jboss/.*\.java				--	gen_context(system_u:object_r:jboss_lib_t,s0)
+
+/opt/jboss/.*/(appclient|domain|standalone)/data(/.*)?			gen_context(system_u:object_r:jboss_data_t,s0)
+/opt/jboss/.*/(appclient|domain|standalone)/data/.*\.(e|j|w)ar(/.*)?	gen_context(system_u:object_r:jboss_cache_t,s0)
+
+/opt/jboss/.*/(appclient|domain|standalone)/deployments(/.*)?		gen_context(system_u:object_r:jboss_deploy_t,s0)
+/opt/jboss/.*/(appclient|domain|standalone)/tmp(/.*)?			gen_context(system_u:object_r:jboss_tmp_t,s0)
+/opt/jboss/as/bin/(appclient|domain|standalone).sh		--	gen_context(system_u:object_r:jboss_exec_t,s0)
+/opt/jboss/jboss-[^/]+/bin/(appclient|domain|standalone).sh	--	gen_context(system_u:object_r:jboss_exec_t,s0)
+
+/var/log/jboss-as(/.*)?			  		gen_context(system_u:object_r:jboss_log_t,s0)

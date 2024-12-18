@@ -1,0 +1,8 @@
+policy_module(httpd_ext, 0.0.1)
+
+require {
+        type httpd_t;
+}
+
+#============= httpd_t ==============
+corenet_tcp_connect_ldap_port(httpd_t)

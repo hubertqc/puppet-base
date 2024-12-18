@@ -1,0 +1,7 @@
+<%
+	@clients_persistent_ips.each do |client|
+%>
+<%= client['name'] %>,<%= client['ip'] %>
+<%
+	end
+%>

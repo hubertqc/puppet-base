@@ -1,0 +1,29 @@
+# THIS FILE IS MANAGED BY PUPPET
+#
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+MAILTO=root
+
+<% if ['chaos', 'ouranos', 'gaia', 'promethee'].include?(@hostname) %>
+# Restart Postfix and OpenLDAP
+00 22 * * 0,3		root		/usr/bin/systemctl restart postfix slapd
+<% end
+   if @dovecot_server %>
+# IMAP/Dovecot tasks
+30 */6 * * *		root            /opt/mailtasks/MailboxIndex 
+<% if @dovecot_active_server %>
+00 01 * * *             mailtasks       /opt/mailtasks/SpamPurge
+30 01 * * *             mailtasks       /opt/mailtasks/TrashPurge
+#
+*/5 * * * *             mailtasks       /opt/mailtasks/sa-learn.sh
+#
+<% end %>
+#
+#35,45,55 * * * *       mailtasks       /opt/mailtasks/MailboxSync
+<% end %>
+#
+#
+# OpenDMARC tasks
+45 * * * *              root            /usr/sbin/runuser       opendmarc -s /opt/mailtasks/OpenDmarc-ImportToDB
+<% if @opendmarc_report_server %>
+00 08 * * *             root            /opt/mailtasks/OpenDmarc-Reports
+<% end %>

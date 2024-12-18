@@ -1,0 +1,56 @@
+policy_module(nasbackup, 0.1.3)
+
+gen_require(`
+	attribute	unconfined_domain_type;
+	attribute	cron_job_domain;
+
+	type		system_cronjob_t;
+	type		sysadm_t;
+
+	role		system_r;
+	role		sysadm_r;
+')
+
+userdom_restricted_user_template(nasbackup)
+typeattribute	nasbackup_t 	cron_job_domain;
+
+type	nasbackup_data_t;
+files_type(nasbackup_data_t)
+
+role	system_r	types	nasbackup_t;
+role	sysadm_r	types	nasbackup_t;
+
+role nasbackup_r;
+role nasbackup_r	types	nasbackup_t;
+
+##############################################
+
+allow	system_cronjob_t	nasbackup_data_t:dir		list_dir_perms;
+allow	system_cronjob_t	nasbackup_data_t:file		getattr;
+allow	system_cronjob_t	nasbackup_data_t:lnk_file	getattr;
+
+allow	nasbackup_t		nasbackup_data_t:dir		manage_dir_perms;
+allow	nasbackup_t		nasbackup_data_t:file		manage_file_perms;
+allow	nasbackup_t		nasbackup_data_t:lnk_file	manage_lnk_file_perms;
+allow	nasbackup_t		nasbackup_data_t:fifo_file	manage_fifo_file_perms;
+allow	nasbackup_t		nasbackup_data_t:sock_file	manage_sock_file_perms;
+
+allow	sysadm_t		nasbackup_data_t:dir		manage_dir_perms;
+allow	sysadm_t		nasbackup_data_t:file		manage_file_perms;
+allow	sysadm_t		nasbackup_data_t:lnk_file	manage_lnk_file_perms;
+allow	sysadm_t		nasbackup_data_t:fifo_file	manage_fifo_file_perms;
+allow	sysadm_t		nasbackup_data_t:sock_file	manage_sock_file_perms;
+
+filetrans_add_pattern(nasbackup_t,		nasbackup_data_t,	nasbackup_data_t,	{ dir file lnk_file fifo_file sock_file })
+
+filetrans_add_pattern(unconfined_domain_type,	nasbackup_data_t,	nasbackup_data_t,	{ dir file lnk_file fifo_file sock_file })
+filetrans_add_pattern(sysadm_t,			nasbackup_data_t,	nasbackup_data_t,	{ dir file lnk_file fifo_file sock_file })
+
+
+#####################################
+
+sysnet_read_config(nasbackup_t)
+
+#####################################
+
+user	nasbackup_u	roles	{ nasbackup_r }		level s0	range	s0 - s0:c0.c1023;

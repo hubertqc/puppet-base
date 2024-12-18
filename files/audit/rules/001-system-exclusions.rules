@@ -1,0 +1,60 @@
+#################################################################
+# This file is managed by Puppet                                #
+#################################################################
+
+# Event exclude
+-a exclude,always -F msgtype=CRED_ACQ
+-a exclude,always -F msgtype=CRYPTO_KEY_USER
+-a exclude,always -F msgtype=CRED_DISP
+-a exclude,always -F msgtype=USER_ACCT
+-a exclude,always -F msgtype=USER_CMD
+-a exclude,always -F msgtype=OBJ_PID
+-a exclude,always -F msgtype=CRYPTO_SESSION
+-a exclude,always -F msgtype=LOGIN
+-a exclude,always -F msgtype=USER_LOGOUT
+-a exclude,always -F msgtype=USER_ROLE_CHANGE
+-a exclude,always -F msgtype=SOCKADDR
+-a exclude,always -F msgtype=CRED_REFR
+-a exclude,always -F msgtype=MMAP
+-a exclude,always -F msgtype=USER_ERR
+-a exclude,always -F msgtype=BPRM_FCAPS
+
+# Command exec
+-a never,exit -S all -F auid=4294967295
+-a never,exit -S all -F success=0
+
+-a never,exit -F arch=b64 -S execve -F path=/bin/grep
+-a never,exit -F arch=b64 -S execve -F path=/bin/cut
+-a never,exit -F arch=b64 -S execve -F path=/bin/date
+-a never,exit -F arch=b64 -S execve -F path=/usr/bin/wc
+-a never,exit -F arch=b64 -S execve -F path=/bin/ps
+-a never,exit -F arch=b64 -S execve -F path=/bin/ls
+
+-a never,exit -F arch=b64 -S execve -F path=/bin/sed -F euid>0 -C auid=euid
+-a never,exit -F arch=b64 -S execve -F path=/usr/bin/ruby -F euid>0 -C auid=euid
+-a never,exit -F arch=b64 -S execve -F path=/bin/gawk -F euid>0 -C auid=euid
+-a never,exit -F arch=b64 -S execve -F path=/bin/awk -F euid>0 -C auid=euid
+
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/egrep
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/grep
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/cut
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/date
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/wc
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/ps
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/tail
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/head
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/sort
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/diff
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/join
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/sleep
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/uname
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/uptime
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/id
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/tty
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/seinfo
+
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/sed -F euid>0 -C auid=euid
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/ruby -F euid>0 -C auid=euid
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/gawk -F euid>0 -C auid=euid
+-a never,exit -F arch=b64 -S execve -F exe=/usr/bin/awk -F euid>0 -C auid=euid
+

@@ -1,0 +1,3 @@
+---
+base::core::openvpn::log_vg: fedora_taravu
+

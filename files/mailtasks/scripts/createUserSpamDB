@@ -1,0 +1,30 @@
+#!/bin/bash
+
+RC=0
+
+if [ $# -eq 1 ]
+then
+	dbpath="$1"
+
+	if [ ! -d "${dbpath}" ] 
+	then
+		mkdir -p "${dbpath}"
+	else
+		echo "${dbpath} already exists."
+	fi
+
+	if [ -d "${dbpath}" ] 
+	then
+		chown sa-milt:mail "${dbpath}"
+		chmod 2750 "${dbpath}"
+		chcon -u system_u -t spamass_milter_state_t "${dbpath}"
+	else
+		echo "${dbpath} could not be created."
+		RC=2
+	fi
+else
+	echo "Usage $(basename $0) <path>"
+	RC=127
+fi
+
+exit $RC

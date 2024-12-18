@@ -1,0 +1,215 @@
+policy_module(jboss, 0.10.0)
+
+attribute	jboss_file;
+
+type	jboss_t;
+domain_type(jboss_t)
+
+type	jboss_file_t;
+files_type(jboss_file_t)
+typeattribute	jboss_file_t	jboss_file;
+
+type	jboss_exec_t;
+files_type(jboss_exec_t)
+typeattribute	jboss_exec_t	jboss_file;
+
+type	jboss_bin_t;
+files_type(jboss_bin_t)
+typeattribute	jboss_bin_t	jboss_file;
+
+type	jboss_lib_t;
+files_type(jboss_lib_t)
+typeattribute	jboss_lib_t	jboss_file;
+
+type	jboss_conf_t;
+files_config_file(jboss_conf_t)
+typeattribute	jboss_conf_t	jboss_file;
+
+type	jboss_dynconf_t;
+files_config_file(jboss_dynconf_t)
+typeattribute	jboss_dynconf_t	jboss_file;
+
+type	jboss_log_t;
+logging_log_file(jboss_log_t)
+typeattribute	jboss_log_t	jboss_file;
+
+type	jboss_tmp_t;
+files_tmp_file(jboss_tmp_t)
+typeattribute	jboss_tmp_t	jboss_file;
+
+type	jboss_data_t;
+files_tmp_file(jboss_data_t)
+typeattribute	jboss_data_t	jboss_file;
+
+type	jboss_cache_t;
+files_tmp_file(jboss_cache_t)
+typeattribute	jboss_cache_t	jboss_file;
+
+type	jboss_deploy_t;
+files_tmp_file(jboss_deploy_t)
+typeattribute	jboss_deploy_t	jboss_file;
+
+
+init_daemon_domain(jboss_t, jboss_exec_t)
+domain_entry_file(jboss_t, jboss_exec_t)
+
+#####################################################
+
+
+require {
+	attribute	sepgsql_client_type;
+
+	type	init_t;
+	type	net_conf_t;
+	type	cert_t;
+	type	usr_t;
+	type	node_t;
+	type	sysfs_t;
+	type	var_log_t;
+	type	cgroup_t;
+	type	tmp_t;
+	type	proc_t;
+	type	hugetlbfs_t;
+	type	jboss_management_port_t;
+	type	http_port_t;
+	type	ldap_port_t;
+	type	http_cache_port_t;
+	type	postgresql_port_t;
+	type	proc_net_t;
+	type	random_device_t;
+	type	passwd_file_t;
+	type	bin_t;
+
+	type	postgresql_t;
+	type	slapd_t;
+	type	dirsrv_t;
+	type	httpd_t;
+
+	type	unconfined_t;
+	type	unconfined_service_t;
+
+	role	system_r;
+
+	class process execmem;
+	class chr_file { getattr open read };
+	class tcp_socket { accept bind connect create getattr getopt listen name_bind name_connect node_bind setopt };
+	class netlink_route_socket { bind create getattr nlmsg_read };
+	class lnk_file { getattr read };
+	class udp_socket { connect create getattr ioctl };
+};
+
+
+#####################################################
+
+allow	init_t	jboss_file:dir	 	search_dir_perms;
+allow	init_t	jboss_file:file		getattr;
+allow	init_t	jboss_file:lnk_file	read_lnk_file_perms;
+
+#####################################################
+
+corenet_out_generic_if(jboss_t)
+corenet_out_generic_node(jboss_t)
+corenet_in_generic_if(jboss_t)
+corenet_in_generic_node(jboss_t)
+corenet_tcp_bind_generic_node(jboss_t)
+corenet_tcp_bind_generic_port(jboss_t)
+
+corecmd_exec_bin(jboss_t)
+corecmd_mmap_bin_files(jboss_t)
+
+fs_exec_hugetlbfs_files(jboss_t)
+fs_read_cgroup_files(jboss_t)
+fs_search_cgroup_dirs(jboss_t)
+miscfiles_read_generic_certs(jboss_t)
+
+sssd_read_public_files(jboss_t)
+sssd_search_lib(jboss_t)
+
+typeattribute	jboss_t	sepgsql_client_type;
+postgresql_tcp_connect(jboss_t)
+
+corenet_tcp_connect_smtp_port(jboss_t)
+
+#####################################################
+
+role	system_r	types	jboss_t;
+
+allow jboss_t self:process		execmem;
+allow jboss_t self:netlink_route_socket	{ bind create getattr nlmsg_read };
+allow jboss_t self:netlink_route_socket { getopt setopt };
+allow jboss_t self:netlink_route_socket { read write };
+
+allow jboss_t self:tcp_socket		{ create_stream_socket_perms };
+allow jboss_t self:udp_socket		{ connect create getattr ioctl setopt read write };
+
+allow jboss_t http_cache_port_t:tcp_socket 		{ name_bind name_connect };
+allow jboss_t http_port_t:tcp_socket			{ name_bind name_connect };
+allow jboss_t jboss_management_port_t:tcp_socket	name_bind;
+allow jboss_t ldap_port_t:tcp_socket			{ name_connect };
+allow jboss_t postgresql_port_t:tcp_socket		{ name_connect };
+
+allow jboss_t hugetlbfs_t:file		{ execute read };
+allow jboss_t net_conf_t:file		{ getattr open read };
+allow jboss_t passwd_file_t:file	{ getattr open read };
+allow jboss_t proc_net_t:file		{ getattr open read };
+allow jboss_t proc_t:file		{ getattr open read };
+allow jboss_t random_device_t:chr_file	{ getattr open read };
+allow jboss_t sysfs_t:dir		read;
+
+
+#####################################################
+
+filetrans_add_pattern(jboss_t,	jboss_conf_t,	jboss_dynconf_t,	{ file }, "logging.properties" )
+filetrans_add_pattern(jboss_t,	jboss_conf_t,	jboss_dynconf_t,	{ dir }, "standalone_xml_history" )
+filetrans_add_pattern(jboss_t,	jboss_conf_t,	jboss_dynconf_t,	{ dir }, "domain_xml_history" )
+
+filetrans_add_pattern(jboss_t,		jboss_data_t,	jboss_data_t,		{ file dir lnk_file sock_file fifo_file } )
+filetrans_add_pattern(jboss_t,		jboss_cache_t,	jboss_cache_t,		{ file dir lnk_file sock_file fifo_file } )
+filetrans_add_pattern(jboss_t,		jboss_deploy_t,	jboss_deploy_t,		{ file dir lnk_file sock_file fifo_file } )
+filetrans_add_pattern(unconfined_t,	jboss_deploy_t,	jboss_deploy_t,		{ file dir lnk_file sock_file fifo_file } )
+
+filetrans_add_pattern(jboss_t,	tmp_t,		jboss_tmp_t,		{ file dir lnk_file sock_file fifo_file } )
+filetrans_add_pattern(jboss_t,	jboss_tmp_t,	jboss_tmp_t,		{ file dir lnk_file sock_file fifo_file } )
+filetrans_add_pattern(jboss_t,	jboss_log_t,	jboss_log_t,		{ file dir lnk_file } )
+
+allow jboss_t jboss_file:dir		list_dir_perms;
+allow jboss_t jboss_file:file		read_file_perms;
+allow jboss_t jboss_file:lnk_file	read_lnk_file_perms;
+allow jboss_t jboss_file:sock_file	read_sock_file_perms;
+allow jboss_t jboss_file:fifo_file	read_fifo_file_perms;
+
+allow jboss_t jboss_dynconf_t:dir	rw_dir_perms;
+allow jboss_t jboss_dynconf_t:file	manage_file_perms;
+
+allow jboss_t jboss_lib_t:file 		map;
+allow jboss_t jboss_bin_t:file 		exec_file_perms;
+
+allow jboss_t jboss_log_t:dir	{ list_dir_perms add_name create } ;
+allow jboss_t jboss_log_t:file	{ create write append_file_perms rename read unlink } ;
+
+allow jboss_t jboss_tmp_t:dir	{ rw_dir_perms create rename rmdir };
+allow jboss_t jboss_tmp_t:file	{ manage_file_perms map };
+
+allow jboss_t jboss_data_t:dir		{ rw_dir_perms create rmdir };
+allow jboss_t jboss_data_t:file		{ manage_file_perms };
+
+allow jboss_t jboss_cache_t:dir		{ manage_dir_perms };
+allow jboss_t jboss_cache_t:file	{ manage_file_perms };
+
+allow jboss_t jboss_deploy_t:dir	{ rw_dir_perms create };
+allow jboss_t jboss_deploy_t:file	{ manage_file_perms };
+
+
+#######################################
+
+allow	postgresql_t	jboss_t:peer		recv;
+allow	jboss_t		postgresql_t:peer	recv;
+
+allow	slapd_t		jboss_t:peer	recv;
+allow	jboss_t		slapd_t:peer	recv;
+
+allow	dirsrv_t	jboss_t:peer	recv;
+allow	jboss_t		dirsrv_t:peer	recv;
+
+allow	jboss_t		httpd_t:peer	recv;
+allow	httpd_t		jboss_t:peer	recv;

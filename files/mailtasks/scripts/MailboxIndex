@@ -1,0 +1,50 @@
+#!/bin/bash -p
+
+if [ -r $( dirname $0 )/MailTasksCONFIG ] 
+then
+	. $( dirname $0 )/MailTasksCONFIG
+else
+	exit 127
+fi
+
+RC=0
+
+[ -d ${LOCKDIR} ] || mkdir ${LOCKDIR}
+
+for MAILUSER in $( cat ${USER_LIST} )
+do
+	LOCK=${LOCKDIR}/$( echo ${MAILUSER} | sha256sum | cut -b 1-64 )
+
+	if [ -f ${LOCK} ]
+	then
+		echo "Lock file found for ${MAILUSER}, skipping."
+	else
+
+		touch ${LOCK}
+
+		doveadm mailbox list -u $MAILUSER | while read MAILBOX
+		do
+			a=1
+			rc=19
+			echo "+ Indexing ${MAILUSER} 's mailbox ${MAILBOX}"
+			while [ $a -le $MAILBOX_INDEX_MAX_ATTEMPTS -a $rc -ne 0 ]
+			do
+				echo "    attempt $a"
+				/usr/bin/doveadm index -u ${MAILUSER} "${MAILBOX}"
+				rc=$?
+
+				a=$(( $a + 1 ))
+			done
+			echo ""
+			
+			RC=$(( $RC + $rc ))
+		done
+
+		/bin/rm -f ${LOCK} 
+	fi
+done > ${LOGFILE} 2>&1
+
+[ $RC -ne 0 ] && /bin/cat ${LOGFILE}
+
+
+exit $RC
